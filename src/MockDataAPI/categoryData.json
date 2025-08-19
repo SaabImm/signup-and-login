@@ -1,0 +1,56 @@
+{ "imageCategory" : [
+    {
+        "id": 0,
+        "description": "Smartphones",
+        "category" : "iphones"
+
+    },
+
+    {
+        "id": 1,
+        "description": "Laptops",
+        "category": "laptops"
+    },
+    {
+        "id": 2,
+        "description": "Smartwatches",
+        "category": "smartwatches"
+    },
+    {
+        "id": 3,
+        "description": "KeyBoards",
+        "category": "keyboards"
+    },
+    {
+        "id": 4,
+        "description": "Headphones",
+        "category": "headphones"
+    },
+    {
+        "id": 5,
+        "description": "Mouses",
+        "category": "mice"
+    },
+    {
+        "id": 6,
+        "description": "Mouses",
+        "category": "mouses"
+    },
+        {
+        "id": 7,
+        "description": "Mouses",
+        "category": "mouses"
+    },
+        {
+        "id": 8,
+        "description": "Mouses",
+        "category": "mice"
+    },
+        {
+        "id": 9,
+        "description": "Mouses",
+        "category": "mice"
+    }
+
+    ]
+}
