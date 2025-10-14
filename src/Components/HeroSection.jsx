@@ -7,7 +7,7 @@ export default function HeroSection(){
     return(
         <>
             <div className="h-full overflow-hidden mx-3 font-[Orbitron] ">
-                <img src={heroImage} alt="Hero Image" className='w-full h-full object-cover rounded-xl' />
+                <img src={heroImage} alt="Hero Image" className='w-full h-full object-cover rounded-3xl' />
                 <div className="heroTextContainer absolute top-[120px] left-[100px] text-[#F5F5F5] w-1/3 ">
                     <p className='text-6xl '>
                         shopping and department store.
