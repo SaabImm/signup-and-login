@@ -3,7 +3,7 @@ import Title from '../Components/Title'
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { UserContext } from "../Context/dataCont";
-
+import { Link } from "react-router-dom";
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
@@ -82,7 +82,7 @@ const { setUser } = useContext(UserContext);
       </div>
       <div className="text-center">
         By continuing, you agree to our Terms and Privacy Policy. <br /> 
-        You don't have an account? <a href="/signup">Sign Up</a>
+        You don't have an account? <Link to="/signup">Sign Up</Link>
     </div>
     </div>
   );
