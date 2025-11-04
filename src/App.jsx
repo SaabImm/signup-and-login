@@ -9,7 +9,7 @@ export default function App() {
     <Router>
       <Routes>  
           <Route path="/signup" element={<FormulaireCNOA/>} />
-          <Route path="/login" element={<LoginForm/>} />
+          <Route path="/" element={<LoginForm/>} />
           <Route path="/profile" element={<ProfilePage/>} />
       </Routes>
     </Router>
