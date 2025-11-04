@@ -32,8 +32,8 @@ export default function ProfilePage() {
             />
 
             <div className="text-center">
-              <h2 className="text-2xl font-semibold">Sabrina Bessa</h2>
-              <p className="text-gray-500 mt-1">saabimm@gmail.com</p>
+              <h2 className="text-2xl font-semibold">{user?.name} {user?.lastname} </h2>
+              <p className="text-gray-500 mt-1">{user?.email}</p>
               <span className="text-sm px-3 py-1 bg-gray-200 rounded-full mt-2 inline-block">
                 User
               </span>

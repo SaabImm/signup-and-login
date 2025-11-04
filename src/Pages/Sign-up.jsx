@@ -1,6 +1,5 @@
 import {React, useState, useEffect} from "react";
 import Title from '../Components/Title'
-import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import Navbar from '../Components/Navbar/Navbar'
 import { useContext } from "react";
@@ -29,7 +28,7 @@ const handleSubmit = async (e) => {
   e.preventDefault();
 
   try {
-    const response = await fetch("https://back-end-signup-and-login.onrender.com/auth/signup", {
+    const response = await fetch("http://localhost:3000/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
@@ -112,7 +111,7 @@ const handleSubmit = async (e) => {
       <div className="text-center">
         
         By continuing, you agree to our Terms and Privacy Policy. <br /> 
-        Already have an account? <a href="/login">Log In</a>
+        Already have an account? <a href="/">Log In</a>
     </div>
     </div> 
     </>

@@ -1,5 +1,6 @@
 import './App.css'
 import FormulaireCNOA from './Pages/Sign-up'
+import LoginForm from './Pages/Login'
 import ProfilePage from './Pages/ProfilePage'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 export default function App() {
@@ -7,7 +8,8 @@ export default function App() {
     <>
     <Router>
       <Routes>  
-          <Route path="/" element={<FormulaireCNOA/>} />
+          <Route path="/signup" element={<FormulaireCNOA/>} />
+          <Route path="/" element={<LoginForm/>} />
           <Route path="/profile" element={<ProfilePage/>} />
       </Routes>
     </Router>
