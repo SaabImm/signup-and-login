@@ -14,13 +14,17 @@ export default function VerifyPage() {
   useEffect(() => {
     const verifyUser = async () => {
       try {
+            console.log("🔍 API_URL:", API_URL);
+            console.log("🔍 TOKEN:", token);
+            console.log("🔍 FULL VERIFY URL:", `${API_URL}/auth/verify?token=${token}`);
         const response = await fetch(`${API_URL}/auth/verify?token=${token}`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
-        console.log("fetched successfully!!!")
+        console.log("✅ RESPONSE STATUS:", response.status);
         const data = await response.json();
-
+        console.log("✅ RESPONSE DATA:", data);
+        
         if (response.ok) {
           // ✅ Save user and token in context
           setAuthData({
