@@ -2,9 +2,10 @@ import { useEffect, useState, useContext } from "react";
 import { useSearchParams , useNavigate } from "react-router-dom";
 import { UserContext } from "../Context/dataCont";
 
-const API_URL = import.meta.env.VITE_API_URL;
+
 
 export default function VerifyPage() {
+  const API_URL = import.meta.env.VITE_API_URL;
     const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const [message, setMessage] = useState("Verifying your email...");
