@@ -50,8 +50,10 @@ export default function VerifyPage() {
   }, [token, navigate, setAuthData]);
 
   return (
-    <div style={{ textAlign: "center", marginTop: "3rem" }}>
-      <h2>{message}</h2>
-    </div>
+        <div className='PendingContainer min-h-screen flex items-center justify-center '>
+          <div className=" flex items-center flex-col justify-center m-auto gap-5 p-20 w-1/2 text-lg font-[Montserrat] rounded-2xl shadow-2xl text-center">
+          <Title title={message}/>
+          </div>
+        </div>
   );
 }
