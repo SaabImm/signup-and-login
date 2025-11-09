@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext } from "react";
 import { useSearchParams , useNavigate } from "react-router-dom";
 import { UserContext } from "../Context/dataCont";
-
+import Title from '../Components/Title'
 
 
 export default function VerifyPage() {
