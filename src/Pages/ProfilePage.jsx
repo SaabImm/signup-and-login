@@ -10,7 +10,7 @@ export default function ProfilePage() {
   const { authData, setAuthData, logout} = useContext(UserContext);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const id = authData.user?.id
+  const id = authData.user?.id || authData.user?._id;
   useEffect(() => {
   if (authData.user !== null) {
     setLoading(false);
