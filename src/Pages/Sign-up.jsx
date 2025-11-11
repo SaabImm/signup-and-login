@@ -5,11 +5,19 @@ import Navbar from '../Components/Navbar/Navbar'
 const API_URL = import.meta.env.VITE_API_URL;
 
    export default function FormulaireCNOA() {
+  const [message, setMessage] = useState("");
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0'); // months are 0-indexed
+  const dd = String(today.getDate()).padStart(2, '0');
+  const maxDate = `${yyyy}-${mm}-${dd}`;
   const [formData, setFormData] = useState({
     name: "",
     lastname: "",
     email: "",
+    dateOfBirth: "",
     password: "",
+    secondPassword:""
   });
 
   const navigate = useNavigate();
@@ -26,16 +34,24 @@ const API_URL = import.meta.env.VITE_API_URL;
     e.preventDefault();
 
     try {
+      if(formData.password!==formData.secondPassword){
+        setMessage('Please make sure your passwords match.')
+        return;
+      }
       const response = await fetch(`${API_URL}/auth/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
-      });
-      console.log("STATUS", response.status);      
+        body: JSON.stringify({
+        name: formData.name,
+        lastname: formData.lastname,
+        email: formData.email,
+        password: formData.password
+      })
+      }); 
       const data = await response.json()
-      
+      setMessage(data.message)
       if (response.ok) {
       navigate("/verify-pending");
     } else {
@@ -74,8 +90,11 @@ const API_URL = import.meta.env.VITE_API_URL;
             className="w-full p-3 bg-[#334A4F]/60 text-white placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
           />
           <input
+            onChange={handleChange}
             type="date"
             name="dateOfBirth"
+            min="1900-01-01"
+            max={maxDate}
             className="w-full p-3 bg-[#334A4F]/60 text-white/50 placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
           />
           <input
@@ -93,7 +112,9 @@ const API_URL = import.meta.env.VITE_API_URL;
             className="w-full p-3 bg-[#334A4F]/60 text-white placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
           />
           <input
+           onChange={handleChange}
             type="password"
+            name="secondPassword"
             placeholder="Confirmez votre Mot de passe.."
             className="w-full p-3 bg-[#334A4F]/60 text-white placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
           />
@@ -105,6 +126,9 @@ const API_URL = import.meta.env.VITE_API_URL;
               Envoyer
           </button>
         </form>
+      </div>
+            <div className="errorM text-red-500 ">
+        {message}      
       </div>
       <div className="text-center">
         

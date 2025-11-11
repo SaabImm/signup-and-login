@@ -8,6 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 
 const LoginForm = () => {
+    const [message, setMessage] = useState("");
   const [formData, setFormData] = useState({
     email:"",
     password: ""
@@ -20,7 +21,7 @@ const LoginForm = () => {
     });
 }
 
-const { setAuthData } = useContext(UserContext);
+const { authData, setAuthData } = useContext(UserContext);
   const handleSubmit =async (e)=> {
     e.preventDefault();
     try{
@@ -34,17 +35,17 @@ const { setAuthData } = useContext(UserContext);
 
       
     const data = await response.json();
-
     if (response.ok) {
-      setAuthData({
-        user: data.user,
-        token: data.token
-      });
-      navigate("/profile");
-      console.log('u have logged in successfully!!')
-    } else {
-      console.error("Signup failed:", data);
-    }
+  setAuthData({
+    user: data.user,
+    token: data.token,
+  });
+  navigate("/profile");
+  console.log('You have logged in successfully!');
+} else {
+  setMessage(data.message)
+  console.log('login failed',message)
+}
     }
     catch (error) {
       console.error("Erreur réseau :", error);
@@ -85,6 +86,9 @@ const { setAuthData } = useContext(UserContext);
           </button>
         </form>
       </div>
+      <div className="errorM text-red-500 ">
+        {message}      
+      </div>
       <div className="text-center">
         By continuing, you agree to our Terms and Privacy Policy. <br /> 
         You don't have an account? <Link to="/signup">Sign Up</Link>
@@ -94,3 +98,4 @@ const { setAuthData } = useContext(UserContext);
 };
 
 export default LoginForm;
+ 
