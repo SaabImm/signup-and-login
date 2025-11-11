@@ -36,14 +36,14 @@ const { setAuthData } = useContext(UserContext);
     const data = await response.json();
 
     if (response.ok) {
-                setAuthData({
-            user: data.user,
-            token: data.token
-          }); 
+      setAuthData({
+        user: data.user,
+        token: data.token
+      });
       navigate("/profile");
       console.log('u have logged in successfully!!')
     } else {
-      console.log("Signup failed:", data);
+      console.error("Signup failed:", data);
     }
     }
     catch (error) {

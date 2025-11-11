@@ -1,15 +1,49 @@
 import Title from '../Components/Title'
 import sabAvatar from '../assets/SabrinaAvatar.jpg'
 import Navbar from '../Components/Navbar/Navbar'
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { UserContext } from "../Context/dataCont";
+import { useNavigate } from "react-router-dom";
+
 export default function ProfilePage() {
-  const { authData } = useContext(UserContext);
+  const API_URL = import.meta.env.VITE_API_URL;
+  const { authData, setAuthData, logout} = useContext(UserContext);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const id = authData.user?.id
+  useEffect(() => {
+  if (authData.user !== null) {
+    setLoading(false);
+  }
+}, [authData]);
+  useEffect(() => {
+      if (!authData.user && !loading) 
+        {navigate("/");
+          setLoading(false)
+        }      
+    }, [authData, loading]);
+  //handles the logout button
+  const handleLogout = async (e) => { 
+    e.preventDefault();
+      const response = await fetch(`${API_URL}/auth/logout?id=${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      }
+    });
+    if (response.ok) {
+      console.log(response.message)
+      logout();
+    } else {
+      console.error(response.message || "Signup error");
+    }  
+
+  }
   return (
     <>
       <Navbar />
 
-      <div className="min-h-screen px-10 py-16 bg-gray-50">
+      <div className="min-h-screen px-10 py-16 bg-gray-50 flex flex-col items-center">
 
         {/* Page Header */}
         <div className="w-3/4 mx-auto mb-14 text-center">
@@ -20,7 +54,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Main Content */}
-        <div className="w-3/4 mx-auto flex items-start gap-14">
+        <div className="w-3/4 mx-auto flex items-center gap-14">
 
           {/* Left Side */}
           <div className="basis-1/3 flex flex-col items-center gap-6">
@@ -68,7 +102,13 @@ export default function ProfilePage() {
 
           </div>
         </div>
+      <button className='w-1/4 m-auto py-3 text-lg font-semibold text-gray-500 border-2 border-gray-400 rounded-md bg-transparent hover:bg-gray-400 hover:text-white transition-all duration-300' 
+      onClick={handleLogout}>
+        Logout
+      </button>
       </div>
+
+
     </>
   )
 }
