@@ -15,7 +15,6 @@ const LoginForm = () => {
     });
     const navigate = useNavigate(); 
   const handleChange = (e)=>{
-    e.preventDefault();
     setFormData({
       ...formData, [e.target.name]: e.target.value,
     });
@@ -32,19 +31,21 @@ const { authData, setAuthData } = useContext(UserContext);
         },
       body: JSON.stringify(formData)
       });
-
-      
     const data = await response.json();
     if (response.ok) {
   setAuthData({
     user: data.user,
     token: data.token,
   });
-  navigate("/profile");
-  console.log('You have logged in successfully!');
+        const roleRedirects = {
+        admin: "/dash",
+        user: "/profile",
+      };
+      const targetRoute = roleRedirects[data.user.role] || "/";
+      navigate(targetRoute)
 } else {
   setMessage(data.message)
-  console.log('login failed',message)
+  console.log('login failed',data.message)
 }
     }
     catch (error) {

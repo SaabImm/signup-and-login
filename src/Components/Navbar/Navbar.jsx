@@ -1,15 +1,12 @@
- 
 import NavLink from './NavLinks'
 import { Link } from "react-router-dom";
 import { useState, useContext} from "react"
-import { PiShoppingCartFill } from "react-icons/pi";
 import { IoSearchOutline } from "react-icons/io5";
 import { PiUser } from "react-icons/pi";
 
 
 export default function Navbar(){
     const [isOpenBar, setIsOpenBar]=  useState(false)
-    const [isOpenMenue, setIsOpenMenue]=useState(false)
     const toggleSearchBar= ()=>{
         setIsOpenBar(prev => !prev)
     }
@@ -30,14 +27,14 @@ export default function Navbar(){
                 </div>
 
                 <ul className='flex justify-between gap-6 items-center'>
-                    <li><PiShoppingCartFill size={20} /> </li>
+                    
                     {isOpenBar &&
                     <input type="text" className="rounded-md border px-2 py-1 ml-2 outline-none font-[Montserrat,sans-serif]"   onChange={handleChange}/>}
                     <button onClick={toggleSearchBar}>
                     <li ><IoSearchOutline  size={20}/> </li>
                     </button>
                     <button className='transition duration-200'>
-                    <Link to={`/signup`} >
+                    <Link to={`/`} >
                         <li><PiUser   size={20}/> </li>
                     </Link>
                     </button>

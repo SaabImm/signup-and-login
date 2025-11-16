@@ -1,52 +1,15 @@
-import Title from '../Components/Title'
 import sabAvatar from '../assets/SabrinaAvatar.jpg'
-import Navbar from '../Components/Navbar/Navbar'
-import { useContext, useEffect, useState } from "react";
+import Title from '../Components/Title'
+import { useContext} from "react";
+import {logoutContext} from "../Context/logoutContext"
 import { UserContext } from "../Context/dataCont";
-import { useNavigate } from "react-router-dom";
+
 
 export default function ProfilePage() {
-  const API_URL = import.meta.env.VITE_API_URL;
-  const { authData, setAuthData, logout} = useContext(UserContext);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const id = authData.user?.id || authData.user?._id;
-  useEffect(() => {
-  if (authData.user !== null) {
-    setLoading(false);
-    console.log("no datauser")
-  }
-}, [authData]);
-  useEffect(() => {
-      if (!authData.user && !loading) 
-        {navigate("/");
-          setLoading(false)
-          console.log("hhhhhhhhhhhhhh")
-        }      
-    }, [authData, loading]);
-
-
-    
-  //handles the logout button
-  const handleLogout = async (e) => { 
-    e.preventDefault();
-      const response = await fetch(`${API_URL}/auth/logout?id=${id}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      }
-    });
-    if (response.ok) {
-      console.log(response.message)
-      logout();
-    } else {
-      console.error(response.message || "Signup error");
-    }  
-
-  }
+  const { authData } = useContext(UserContext);
+  const { handleLogout } = useContext(logoutContext)
   return (
     <>
-      <Navbar />
 
       <div className="min-h-screen px-10 py-16 bg-gray-50 flex flex-col items-center">
 
@@ -108,7 +71,7 @@ export default function ProfilePage() {
           </div>
         </div>
       <button className='w-1/4 m-auto py-3 text-lg font-semibold text-gray-500 border-2 border-gray-400 rounded-md bg-transparent hover:bg-gray-400 hover:text-white transition-all duration-300' 
-      onClick={handleLogout}>
+      onClick={()=> {handleLogout()}}>
         Logout
       </button>
       </div>

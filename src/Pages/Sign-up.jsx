@@ -2,7 +2,6 @@ import {React, useState, useContext, useEffect} from "react";
 import Title from '../Components/Title'
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../Context/dataCont";
-import Navbar from '../Components/Navbar/Navbar'
 const API_URL = import.meta.env.VITE_API_URL;
 
    export default function FormulaireCNOA() {
@@ -20,6 +19,7 @@ const API_URL = import.meta.env.VITE_API_URL;
     name: "",
     lastname: "",
     email: "",
+    role: "user",
     dateOfBirth: "",
     password: "",
     secondPassword:""
@@ -57,7 +57,6 @@ const API_URL = import.meta.env.VITE_API_URL;
       }); 
 
       const data = await response.json()
-      console.log('data was RETREIVED successfully',data)
       setMessage(data.message)
       if (response.ok) {
           setAuthData({
@@ -76,7 +75,6 @@ const API_URL = import.meta.env.VITE_API_URL;
 
   return (
     <>
-          <Navbar />
     <div className="flex flex-col justify-center items-center min-h-screen gap-10 font-[Orbitron] border border-t-4 border-b-4 py-10">
       <div className="flex flex-col justify-center items-center ">
         <Title title={'Formulaire CNOA'}/>
