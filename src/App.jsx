@@ -11,6 +11,7 @@ import AuthLayout from './Layouts/AuthLayout'
 import UsersPage from './Pages/DashBoard/Users/UsersPage'
 import GetUsers from './Pages/DashBoard/Users/getUsers'
 import CreateUser from './Pages/DashBoard/Users/createUser'
+import UpdateUser from './Pages/DashBoard/Users/updateUser'
 import { Routes, Route } from "react-router-dom";
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="user" element={<UsersPage/>} />
             <Route path="allUsers" element={<GetUsers/>} />
             <Route path="create" element={<CreateUser/>} />
+            <Route path="update" element={<UpdateUser/>} />
           </Route>
 
       </Routes>

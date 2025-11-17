@@ -64,7 +64,7 @@ const API_URL = import.meta.env.VITE_API_URL;
         token: data.token, // make sure your backend returns this token
   });
       
-      navigate("/verify-pending");
+      navigate("/auth/verify-pending");
     } else {
       console.error(data.message || "Signup error");
     }

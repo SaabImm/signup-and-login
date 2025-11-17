@@ -18,7 +18,6 @@ export default function VerifyPage() {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
-       console.log("fetched :!!!!!!!!")
         const data = await response.json();        
         if (response.ok) {
           // ✅ Save user and token in context

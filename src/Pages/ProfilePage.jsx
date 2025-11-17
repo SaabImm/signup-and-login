@@ -1,4 +1,5 @@
 import sabAvatar from '../assets/SabrinaAvatar.jpg'
+import { useNavigate } from 'react-router-dom';
 import Title from '../Components/Title'
 import { useContext} from "react";
 import {logoutContext} from "../Context/logoutContext"
@@ -6,6 +7,7 @@ import { UserContext } from "../Context/dataCont";
 
 
 export default function ProfilePage() {
+  const navigate= useNavigate()
   const { authData } = useContext(UserContext);
   const { handleLogout } = useContext(logoutContext)
   return (
@@ -70,10 +72,17 @@ export default function ProfilePage() {
 
           </div>
         </div>
-      <button className='w-1/4 m-auto py-3 text-lg font-semibold text-gray-500 border-2 border-gray-400 rounded-md bg-transparent hover:bg-gray-400 hover:text-white transition-all duration-300' 
-      onClick={()=> {handleLogout()}}>
-        Logout
-      </button>
+        <div className='buttons '>
+          <button className='m-4 px-5 py-2 text-lg font-semibold text-gray-500 border-2 border-gray-400 rounded-md bg-transparent hover:bg-gray-400 hover:text-white transition-all duration-300' 
+            onClick={()=> {handleLogout()}}>
+            Logout
+          </button>
+
+          <button className=' m-4 px-5 py-2 text-lg font-semibold text-gray-500 border-2 border-gray-400 rounded-md bg-transparent hover:bg-gray-400 hover:text-white transition-all duration-300' 
+            onClick={()=>{navigate("/dash/update")}}>
+            Edit
+          </button>
+      </div>
       </div>
 
 
