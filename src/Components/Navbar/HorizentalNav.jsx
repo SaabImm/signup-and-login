@@ -1,35 +1,103 @@
-import { useContext } from "react"
-import {logoutContext} from "../../Context/logoutContext"
-import NavLink from "../../Components/Navbar/NavLinks"
-import Title from '../../Components/Title'
+import { useContext } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { logoutContext } from "../../Context/logoutContext";
+import Title from '../../Components/Title';
 
-export default function HorizentalDash() {
-    const {handleLogout}= useContext(logoutContext)
-    return(
-        <>
-            <nav className="NavBarHorizental relative h-full w-[200px]">
-                <div className="NavContainer fixed top-0 left-0 bottom-0 flex flex-col justify-between item-center px-4 py-8">
-                    <div className="Logo">
-                        <Title title={"MbsDash"}/>
-                    </div>
-                    <div className="NavLinksContainer flex flex-col justify-between item-center">
-                        <NavLink text="Dashboard" path="/dash"/>
-                        <NavLink text="Utilisateurs" path="/dash/user"/>
-                        <NavLink text="Produits" path="/dash"/>
-                        <NavLink text="Fichiers" path="/dash"/>
-                    </div>
+export default function SideBar() {
+  const { handleLogout } = useContext(logoutContext);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-                    <div>
-                        <NavLink text="Profile" path="/profile"/>
-                    </div>
+  // Helper to check if link is active
+  const isActive = (path) => location.pathname === path;
 
-                    <button className='
-                      p-3 text-lg font-semibold text-gray-500 border-2 border-gray-400 rounded-md bg-transparent hover:bg-gray-400 hover:text-white transition-all duration-300' 
-                        onClick={()=>{handleLogout()}}>
-                        Logout
-                    </button>
-                </div>
-            </nav>
-        </>
-    )
+  return (
+    <nav className="fixed top-0 left-0 bottom-0 w-[200px] text-black flex flex-col justify-between py-8 px-4 font-urbanist">
+      {/* Logo */}
+      <div className="mb-8">
+        <Title title={"MbsDash"} />
+      </div>
+
+      {/* Main Navigation */}
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={() => navigate("/dash")}
+          className={`w-full text-left px-3 py-2 rounded transition-colors ${
+            isActive("/dash") ? "text-blue-600" : "hover:text-blue-400"
+          }`}
+        >
+          Dashboard
+        </button>
+
+        {/* Utilisateurs Dropdown */}
+        <div className="group relative">
+          <button className="w-full text-left px-3 py-2 rounded transition-colors hover:text-blue-400">
+            Utilisateurs
+          </button>
+
+          <div className="absolute left-0 top-full mt-1 w-full bg-gray-800 text-white rounded shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-300 z-10">
+            <button
+              onClick={() => navigate("/dash/allUsers")}
+              className={`w-full text-left px-4 py-2 rounded transition-colors ${
+                isActive("/dash/allUsers") ? "text-blue-600" : "hover:text-blue-400"
+              }`}
+            >
+              All Users
+            </button>
+            <button
+              onClick={() => navigate("/dash/create")}
+              className={`w-full text-left px-4 py-2 rounded transition-colors ${
+                isActive("/dash/createUser") ? "text-blue-600" : "hover:text-blue-400"
+              }`}
+            >
+              Create User
+            </button>
+            <button
+              onClick={() => navigate("/dash/deleteUser")}
+              className={`w-full text-left px-4 py-2 rounded transition-colors ${
+                isActive("/dash/deleteUser") ? "text-blue-600" : "hover:text-blue-400"
+              }`}
+            >
+              Delete User
+            </button>
+          </div>
+        </div>
+
+        <button
+          onClick={() => navigate("/dash/produits")}
+          className={`w-full text-left px-3 py-2 rounded transition-colors ${
+            isActive("/dash/produits") ? "text-blue-600" : "hover:text-blue-400"
+          }`}
+        >
+          Produits
+        </button>
+
+        <button
+          onClick={() => navigate("/dash/fichiers")}
+          className={`w-full text-left px-3 py-2 rounded transition-colors ${
+            isActive("/dash/fichiers") ? "text-blue-600" : "hover:text-blue-400"
+          }`}
+        >
+          Fichiers
+        </button>
+
+        <button
+          onClick={() => navigate("/profile")}
+          className={`w-full text-left px-3 py-2 rounded transition-colors ${
+            isActive("/profile") ? "text-blue-600" : "hover:text-blue-400"
+          }`}
+        >
+          Profile
+        </button>
+      </div>
+
+      {/* Logout Button */}
+      <button
+        onClick={handleLogout}
+        className="w-full mt-4 px-3 py-2 text-gray-500 border-2 border-gray-400 rounded-md bg-transparent hover:bg-gray-400 hover:text-white transition-all duration-300"
+      >
+        Logout
+      </button>
+    </nav>
+  );
 }

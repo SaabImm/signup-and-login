@@ -1,47 +1,92 @@
-import NavLink from './NavLinks'
-import { Link } from "react-router-dom";
-import { useState, useContext} from "react"
-import { IoSearchOutline } from "react-icons/io5";
-import { PiUser } from "react-icons/pi";
+import { useState, useRef, useEffect, useContext } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { UserContext } from "../../Context/dataCont";
+import { logoutContext } from "../../Context/logoutContext";
+import sabAvatar from '../../assets/SabrinaAvatar.jpg'
+export default function Navbar() {
+  const { authData } = useContext(UserContext);
+  const { handleLogout } = useContext(logoutContext);
+  const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef();
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-export default function Navbar(){
-    const [isOpenBar, setIsOpenBar]=  useState(false)
-    const toggleSearchBar= ()=>{
-        setIsOpenBar(prev => !prev)
-    }
+  return (
+    <nav className="bg-gray-900 text-white shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="flex justify-between h-16 items-center">
+          {/* Logo / Brand */}
+          <div className="flex-shrink-0">
+            <Link to="/" className="text-2xl font-bold text-yellow-400">
+              CNOA FORUM
+            </Link>
+          </div>
 
-    return(
-        <nav className='NavBar'>
-            <div className='top-0 right-0 left-0 flex justify-between items-center rounded-b-lg px-12 py-2 text-[#383838] text-shadow-lg/30'>
-                <Link to='/'>
-                CNOA FORUMS
-                </Link>
+          {/* Desktop Links */}
+          <div className="hidden md:flex items-center gap-6">
+            <Link to="/dash" className="hover:text-yellow-400 transition-colors">
+              Dashboard
+            </Link>
+            <Link to="/about" className="hover:text-yellow-400 transition-colors">
+              About
+            </Link>
+          </div>
 
-                <div className='NavLinks ' >
-                    <ul className='flex justify-between items-center gap-5'>
-                        <NavLink text="Home" path='/'/> 
-                        <NavLink text="Contact US" path="#contact" />
-                        <NavLink text="About" path="#about" />
-                    </ul>
-                </div>
+          {/* Profile Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-800 transition-all"
+            >
+              <span className="font-medium">{authData.user?.name}</span>
+              <img
+                src={sabAvatar}
+                alt="Avatar"
+                className="w-8 h-8 rounded-full"
+              />
+            </button>
 
-                <ul className='flex justify-between gap-6 items-center'>
-                    
-                    {isOpenBar &&
-                    <input type="text" className="rounded-md border px-2 py-1 ml-2 outline-none font-[Montserrat,sans-serif]"   onChange={handleChange}/>}
-                    <button onClick={toggleSearchBar}>
-                    <li ><IoSearchOutline  size={20}/> </li>
-                    </button>
-                    <button className='transition duration-200'>
-                    <Link to={`/`} >
-                        <li><PiUser   size={20}/> </li>
-                    </Link>
-                    </button>
-                </ul>
-            </div>
-            
-        </nav>
-        
-    )
+            {dropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white text-gray-900 shadow-lg rounded-lg py-2 z-50 border border-gray-200">
+                <button
+                  onClick={() => { navigate("/dash/update"); setDropdownOpen(false); }}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 transition-all"
+                >
+                  Edit Profile
+                </button>
+                <button
+                  onClick={() => { navigate("/dash/resetPsw"); setDropdownOpen(false); }}
+                  className="block w-full text-left px-4 py-2 hover:bg-gray-100 transition-all"
+                >
+                  Edit Password
+                </button>
+                <div className="border-t border-gray-200 my-1"></div>
+                <button
+                  onClick={() => { handleLogout(); setDropdownOpen(false); }}
+                  className="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100 transition-all"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
+            {/* Implement a hamburger menu if needed */}
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
 }

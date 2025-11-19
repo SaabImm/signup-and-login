@@ -8,10 +8,10 @@ import AdminDashboard from './Pages/DashBoard/Admin Dashboard'
 import DashLayout from './Layouts/DashLayout'
 import MainLayout from './Layouts/MainLayout'
 import AuthLayout from './Layouts/AuthLayout'
-import UsersPage from './Pages/DashBoard/Users/UsersPage'
 import GetUsers from './Pages/DashBoard/Users/getUsers'
 import CreateUser from './Pages/DashBoard/Users/createUser'
 import UpdateUser from './Pages/DashBoard/Users/updateUser'
+import ResetPassword from './Pages/DashBoard/Users/resetPassword'
 import { Routes, Route } from "react-router-dom";
 export default function App() {
   return (
@@ -29,10 +29,10 @@ export default function App() {
 
           <Route path="/dash" element={<DashLayout/>}>
             <Route index element={<AdminDashboard/>} />
-            <Route path="user" element={<UsersPage/>} />
             <Route path="allUsers" element={<GetUsers/>} />
             <Route path="create" element={<CreateUser/>} />
             <Route path="update" element={<UpdateUser/>} />
+            <Route path="resetPsw" element={<ResetPassword/>} />
           </Route>
 
       </Routes>

@@ -72,17 +72,7 @@ export default function ProfilePage() {
 
           </div>
         </div>
-        <div className='buttons '>
-          <button className='m-4 px-5 py-2 text-lg font-semibold text-gray-500 border-2 border-gray-400 rounded-md bg-transparent hover:bg-gray-400 hover:text-white transition-all duration-300' 
-            onClick={()=> {handleLogout()}}>
-            Logout
-          </button>
 
-          <button className=' m-4 px-5 py-2 text-lg font-semibold text-gray-500 border-2 border-gray-400 rounded-md bg-transparent hover:bg-gray-400 hover:text-white transition-all duration-300' 
-            onClick={()=>{navigate("/dash/update")}}>
-            Edit
-          </button>
-      </div>
       </div>
 
 

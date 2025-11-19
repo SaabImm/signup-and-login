@@ -1,10 +1,10 @@
 import { Outlet } from "react-router-dom";
-import HorizentalDash from "../Components/Navbar/HorizentalNav"
+import SideBar from "../Components/Navbar/HorizentalNav"
 
 export default function AuthLayout() {
   return (
     <>
-      <HorizentalDash/>
+      <SideBar/>
       <main className="min-h-screen">
         <Outlet /> 
       </main>
