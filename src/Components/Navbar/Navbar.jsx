@@ -9,7 +9,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef();
-
+  const id = authData.user?._id || authData.user?.id
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -59,7 +59,7 @@ export default function Navbar() {
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white text-gray-900 shadow-lg rounded-lg py-2 z-50 border border-gray-200">
                 <button
-                  onClick={() => { navigate("/dash/update"); setDropdownOpen(false); }}
+                  onClick={() => { navigate(`/dash/update/${id}`); setDropdownOpen(false); }}
                   className="block w-full text-left px-4 py-2 hover:bg-gray-100 transition-all"
                 >
                   Edit Profile

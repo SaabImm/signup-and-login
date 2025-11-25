@@ -52,14 +52,6 @@ export default function SideBar() {
             >
               Create User
             </button>
-            <button
-              onClick={() => navigate("/dash/deleteUser")}
-              className={`w-full text-left px-4 py-2 rounded transition-colors ${
-                isActive("/dash/deleteUser") ? "text-blue-600" : "hover:text-blue-400"
-              }`}
-            >
-              Delete User
-            </button>
           </div>
         </div>
 

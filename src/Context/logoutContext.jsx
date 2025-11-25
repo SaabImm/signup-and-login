@@ -17,7 +17,6 @@ export default function LogoutProvider({ children }) {
       }
     });
     if (response.ok) {
-      console.log(response.message)
       logout();
       navigate("/")
     } else {

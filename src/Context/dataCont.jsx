@@ -29,6 +29,7 @@ export default function UserProvider({ children }) {
   const logout = () => {
     setAuthData({ user: null, token: null });
     localStorage.removeItem("authData");
+    
   };
 
   return (

@@ -1,18 +1,14 @@
-import sabAvatar from '../assets/SabrinaAvatar.jpg'
-import { useNavigate } from 'react-router-dom';
 import Title from '../Components/Title'
 import { useContext} from "react";
-import {logoutContext} from "../Context/logoutContext"
 import { UserContext } from "../Context/dataCont";
 
 
 export default function ProfilePage() {
-  const navigate= useNavigate()
   const { authData } = useContext(UserContext);
-  const { handleLogout } = useContext(logoutContext)
+  const API_URL = import.meta.env.VITE_API_URL;
+  const PROFILE_URL =`${API_URL}${authData.user?.profilePicture}`
   return (
     <>
-
       <div className="min-h-screen px-10 py-16 bg-gray-50 flex flex-col items-center">
 
         {/* Page Header */}
@@ -28,8 +24,8 @@ export default function ProfilePage() {
 
           {/* Left Side */}
           <div className="basis-1/3 flex flex-col items-center gap-6">
-            <img
-              src={sabAvatar}
+            <img  
+              src={PROFILE_URL}
               alt="Profile"
               loading="lazy"
               className="w-40 h-40 object-cover rounded-full border-4 border-gray-300 shadow"
@@ -74,8 +70,6 @@ export default function ProfilePage() {
         </div>
 
       </div>
-
-
     </>
   )
 }

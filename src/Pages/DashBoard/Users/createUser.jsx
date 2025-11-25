@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { UserContext } from '../../../Context/dataCont';
 import Title from "../../../Components/Title";
+import { fetchWithRefresh }  from "../../../Components/api";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function CreateUser() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
-
+  const { authData, setAuthData } = useContext(UserContext);
   const initialFormData = {
     name: "",
     lastname: "",
@@ -42,9 +44,8 @@ export default function CreateUser() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/user`, {
+      const response = await fetchWithRefresh(`${API_URL}/user`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.name,
           lastname: formData.lastname,
@@ -52,8 +53,12 @@ export default function CreateUser() {
           password: formData.password,
           role: formData.role,
           dateOfBirth: formData.dateOfBirth || null,
+
         }),
-      });
+
+      },   
+          authData.token,
+          setAuthData);
 
       const data = await response.json();
 

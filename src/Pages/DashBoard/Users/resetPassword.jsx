@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import Title from "../../../Components/Title";
 import { UserContext } from "../../../Context/dataCont";
+import { fetchWithRefresh }  from "../../../Components/api";
 
 const API_URL = import.meta.env.VITE_API_URL;
 export default function ResetPassword() {
@@ -34,17 +35,16 @@ const id = authData?.user?._id || authData?.user?.id;
     setMessage("");
     setIsSubmitting(true);
     try {
-        const response = await fetch(`${API_URL}/user/psw/${id}`, {
+        const response = await fetchWithRefresh(`${API_URL}/user/psw/${id}`, {
         method: "PATCH",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authData.token}`,
-        },
         body: JSON.stringify({
             currentPassword : formData.currentPassword,
             newPassword: formData.newPassword
         }),
-        });
+        },
+          authData.token,
+          setAuthData
+      );
 
         const data = await response.json();
 

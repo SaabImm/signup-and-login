@@ -1,4 +1,4 @@
-import {React, useState} from "react";
+import {React, useState, useEffect} from "react";
 import Title from '../Components/Title'
 import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
@@ -8,6 +8,10 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 
 const LoginForm = () => {
+  const { authData, setAuthData, logout } = useContext(UserContext);
+    useEffect(() => {
+      logout()
+  }, []);
     const [message, setMessage] = useState("");
   const [formData, setFormData] = useState({
     email:"",
@@ -20,7 +24,7 @@ const LoginForm = () => {
     });
 }
 
-const { authData, setAuthData } = useContext(UserContext);
+
   const handleSubmit =async (e)=> {
     e.preventDefault();
     try{

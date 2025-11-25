@@ -20,7 +20,6 @@ export default function AdminDashboard() {
                     });
                 const results = await response.json()
                 setData(results)
-                console.log("Données récupérées et data auth:", results, authData)
             }
             catch (error) {
                 console.error("Une erreur est survenue lors de la récupération des données", error);
