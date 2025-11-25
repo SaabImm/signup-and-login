@@ -16,6 +16,7 @@ export default function UpdateUser() {
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const isOwner = authData?.user?.id === id;
+  console.log(isOwner)
 
   const UPDATE_URL = isOwner
     ? `${API_URL}/user/me`

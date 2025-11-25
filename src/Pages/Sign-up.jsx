@@ -8,7 +8,6 @@ const API_URL = import.meta.env.VITE_API_URL;
   const [message, setMessage] = useState("");
   const { setAuthData, authData } = useContext(UserContext);
   useEffect(() => {
-  console.log("authData updated:", authData);
 }, [authData]);
   const today = new Date();
   const yyyy = today.getFullYear();
