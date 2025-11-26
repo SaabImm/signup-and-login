@@ -1,75 +1,86 @@
 import Title from '../Components/Title'
-import { useContext} from "react";
+import { useContext } from "react";
 import { UserContext } from "../Context/dataCont";
-
 
 export default function ProfilePage() {
   const { authData } = useContext(UserContext);
   const API_URL = import.meta.env.VITE_API_URL;
-  const PROFILE_URL =`${API_URL}${authData.user?.profilePicture}`
+  const PROFILE_URL = `${API_URL}${authData.user?.profilePicture}`;
+
+  const roleColors = {
+    admin: "bg-red-200/20 text-red-300 border-red-400/40",
+    user: "bg-blue-200/20 text-blue-300 border-blue-400/40",
+    moderator: "bg-purple-200/20 text-purple-300 border-purple-400/40"
+  };
+
   return (
-    <>
-      <div className="min-h-screen px-10 py-16 bg-gray-50 flex flex-col items-center">
+    <div className="min-h-screen bg-gray-900 pb-16">
 
-        {/* Page Header */}
-        <div className="w-3/4 mx-auto mb-14 text-center">
-          <Title title="Profile" />
-          <p className="text-gray-600 mt-2 text-lg">
-            View all your profile details here
-          </p>
+      {/* --- GOLD COVER --- */}
+      <div className="h-40 bg-yellow-400/80 shadow-md"></div>
+
+      {/* --- PROFILE CARD --- */}
+      <div className="w-3/4 mx-auto -mt-20 bg-gray-800/80 backdrop-blur-xl 
+                      border border-yellow-400/30 rounded-xl shadow-xl p-10 flex gap-10 items-center relative">
+
+        {/* Avatar */}
+        <img
+          src={PROFILE_URL}
+          alt="Profile"
+          className="w-40 h-40 object-cover rounded-full border-4 border-yellow-300 shadow-[0_0_20px_rgba(255,215,100,0.4)]"
+        />
+
+        {/* User main info */}
+        <div className="flex-1">
+          <h2 className="text-3xl font-semibold text-white tracking-tight">
+            {authData.user?.name} {authData.user?.lastname}
+          </h2>
+
+          <p className="text-gray-300 text-lg mt-1">{authData.user?.email}</p>
+
+          {/* Role Badge */}
+          <span
+            className={`mt-3 inline-block px-3 py-1 rounded-full border text-sm font-medium 
+              ${roleColors[authData.user?.role] || "bg-yellow-300/20 text-yellow-300 border-yellow-400/40"}`}
+          >
+            {authData.user?.role.toUpperCase()}
+          </span>
         </div>
 
-        {/* Main Content */}
-        <div className="w-3/4 mx-auto flex items-center gap-14">
-
-          {/* Left Side */}
-          <div className="basis-1/3 flex flex-col items-center gap-6">
-            <img  
-              src={PROFILE_URL}
-              alt="Profile"
-              loading="lazy"
-              className="w-40 h-40 object-cover rounded-full border-4 border-gray-300 shadow"
-            />
-
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold">{authData.user?.name} {authData.user?.lastname} </h2>
-              <p className="text-gray-500 mt-1">{authData.user?.email}</p>
-              <span className="text-sm px-3 py-1 bg-gray-200 rounded-full mt-2 inline-block">
-                {authData.user?.role}
-              </span>
-            </div>
+        {/* Optional Admin Tag */}
+        {authData.user?.role === "admin" && (
+          <div className="absolute top-6 right-6 bg-yellow-300/10 px-4 py-1 rounded-full text-sm shadow-md text-yellow-200 border border-yellow-300/20">
+            ADMIN ACCESS
           </div>
-
-          {/* Right Side */}
-          <div className="basis-2/3 p-8 bg-white rounded-xl shadow-md">
-            <Title title="Personal Details" />
-
-            <div className="mt-6 grid grid-cols-2 gap-6 text-gray-700">
-              <div>
-                <p className="font-medium">Name</p>
-                <p className="text-gray-500 text-sm mt-1"> {authData.user?.name} </p>
-              </div>
-
-              <div>
-                <p className="font-medium">Last Name</p>
-                <p className="text-gray-500 text-sm mt-1"> {authData.user?.lastname} </p>
-              </div>
-
-              <div>
-                <p className="font-medium">Role</p>
-                <p className="text-gray-500 text-sm mt-1"> {authData.user?.role} </p>
-              </div>
-
-              <div>
-                <p className="font-medium">email</p>
-                <p className="text-gray-500 text-sm mt-1"> {authData.user?.email} </p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
+        )}
       </div>
-    </>
-  )
+
+      {/* --- PERSONAL DETAILS CARD --- */}
+      <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl 
+                      rounded-xl shadow-xl border border-yellow-400/20 p-10">
+
+        <div className="flex justify-between items-center mb-6">
+          <Title title="Personal Details" textColor="text-yellow-300" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-8 text-gray-200">
+
+          <DetailBox label="Name" value={authData.user?.name} />
+          <DetailBox label="Last Name" value={authData.user?.lastname} />
+          <DetailBox label="Role" value={authData.user?.role} />
+          <DetailBox label="Email" value={authData.user?.email} />
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailBox({ label, value }) {
+  return (
+    <div className="p-4 rounded-lg bg-gray-900/40 border border-yellow-400/10">
+      <p className="text-yellow-300 text-sm font-medium">{label}</p>
+      <p className="text-gray-300 mt-1">{value}</p>
+    </div>
+  );
 }

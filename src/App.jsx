@@ -13,7 +13,7 @@ import CreateUser from './Pages/DashBoard/Users/createUser'
 import UpdateUser from './Pages/DashBoard/Users/updateUser'
 import ResetPassword from './Pages/DashBoard/Users/resetPassword'
 import DeleteUser from './Components/deleteUser'
-import ProtectedRoute from './Components/ProtectedRoute'
+import AdminUserView from './Pages/DashBoard/Users/AdminView/AdminUserView'
 import { Routes, Route } from "react-router-dom";
 export default function App() {
   return (
@@ -35,6 +35,7 @@ export default function App() {
             <Route path="allUsers" element={<GetUsers />} />
             <Route path="create" element={<CreateUser />} />
             <Route path="update/:id" element={<UpdateUser />} />
+            <Route path="adminUser/:id" element={<AdminUserView />} />
             <Route path="resetPsw" element={<ResetPassword />} />
             <Route path="delete/:id" element={<DeleteUser />} />
         </Route>

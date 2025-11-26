@@ -1,29 +1,31 @@
 import { useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { logoutContext } from "../../Context/logoutContext";
-import Title from '../../Components/Title';
+import SectionTitle from '../Title';
 
 export default function SideBar() {
   const { handleLogout } = useContext(logoutContext);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Helper to check if link is active
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 bottom-0 w-[200px] text-black flex flex-col justify-between py-8 px-4 font-urbanist">
-      {/* Logo */}
-      <div className="mb-8">
-        <Title title={"MbsDash"} />
+    <nav className="fixed top-0 left-0 bottom-0 w-[220px] bg-gray-900 text-gray-100 flex flex-col justify-between py-10 px-4 font-urbanist shadow-lg">
+      
+      {/* Logo / Title */}
+      <div className="mb-10 text-center">
+        <SectionTitle title="MbsDash" />
       </div>
 
       {/* Main Navigation */}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <button
           onClick={() => navigate("/dash")}
-          className={`w-full text-left px-3 py-2 rounded transition-colors ${
-            isActive("/dash") ? "text-blue-600" : "hover:text-blue-400"
+          className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
+            isActive("/dash") 
+              ? "bg-yellow-300 text-gray-900 shadow-lg" 
+              : "hover:bg-yellow-400 hover:text-gray-900"
           }`}
         >
           Dashboard
@@ -31,23 +33,28 @@ export default function SideBar() {
 
         {/* Utilisateurs Dropdown */}
         <div className="group relative">
-          <button className="w-full text-left px-3 py-2 rounded transition-colors hover:text-blue-400">
+          <button className="w-full text-left px-4 py-3 rounded-lg font-medium transition-colors hover:bg-yellow-400 hover:text-gray-900 flex justify-between items-center">
             Utilisateurs
+            <span className="ml-2 transform group-hover:rotate-90 transition-transform">▶</span>
           </button>
 
-          <div className="absolute left-0 top-full mt-1 w-full bg-gray-800 text-white rounded shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-300 z-10">
+          <div className="absolute left-0 top-full mt-1 w-full bg-gray-800 text-gray-100 rounded-lg shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-300 z-20">
             <button
               onClick={() => navigate("/dash/allUsers")}
-              className={`w-full text-left px-4 py-2 rounded transition-colors ${
-                isActive("/dash/allUsers") ? "text-blue-600" : "hover:text-blue-400"
+              className={`w-full text-left px-6 py-2 rounded-lg transition-colors ${
+                isActive("/dash/allUsers") 
+                  ? "bg-yellow-300 text-gray-900" 
+                  : "hover:bg-yellow-400 hover:text-gray-900"
               }`}
             >
               All Users
             </button>
             <button
               onClick={() => navigate("/dash/create")}
-              className={`w-full text-left px-4 py-2 rounded transition-colors ${
-                isActive("/dash/createUser") ? "text-blue-600" : "hover:text-blue-400"
+              className={`w-full text-left px-6 py-2 rounded-lg transition-colors ${
+                isActive("/dash/createUser") 
+                  ? "bg-yellow-300 text-gray-900" 
+                  : "hover:bg-yellow-400 hover:text-gray-900"
               }`}
             >
               Create User
@@ -57,8 +64,10 @@ export default function SideBar() {
 
         <button
           onClick={() => navigate("/dash/produits")}
-          className={`w-full text-left px-3 py-2 rounded transition-colors ${
-            isActive("/dash/produits") ? "text-blue-600" : "hover:text-blue-400"
+          className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
+            isActive("/dash/produits") 
+              ? "bg-yellow-300 text-gray-900 shadow-lg" 
+              : "hover:bg-yellow-400 hover:text-gray-900"
           }`}
         >
           Produits
@@ -66,8 +75,10 @@ export default function SideBar() {
 
         <button
           onClick={() => navigate("/dash/fichiers")}
-          className={`w-full text-left px-3 py-2 rounded transition-colors ${
-            isActive("/dash/fichiers") ? "text-blue-600" : "hover:text-blue-400"
+          className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
+            isActive("/dash/fichiers") 
+              ? "bg-yellow-300 text-gray-900 shadow-lg" 
+              : "hover:bg-yellow-400 hover:text-gray-900"
           }`}
         >
           Fichiers
@@ -75,8 +86,10 @@ export default function SideBar() {
 
         <button
           onClick={() => navigate("/profile")}
-          className={`w-full text-left px-3 py-2 rounded transition-colors ${
-            isActive("/profile") ? "text-blue-600" : "hover:text-blue-400"
+          className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
+            isActive("/profile") 
+              ? "bg-yellow-300 text-gray-900 shadow-lg" 
+              : "hover:bg-yellow-400 hover:text-gray-900"
           }`}
         >
           Profile
@@ -86,7 +99,7 @@ export default function SideBar() {
       {/* Logout Button */}
       <button
         onClick={handleLogout}
-        className="w-full mt-4 px-3 py-2 text-gray-500 border-2 border-gray-400 rounded-md bg-transparent hover:bg-gray-400 hover:text-white transition-all duration-300"
+        className="w-full mt-6 px-4 py-3 bg-gray-700 text-gray-200 rounded-lg hover:bg-yellow-300 hover:text-gray-900 font-medium transition-all duration-300 shadow-md"
       >
         Logout
       </button>

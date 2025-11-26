@@ -1,106 +1,104 @@
-import {React, useState, useEffect} from "react";
-import Title from '../Components/Title'
-import { useNavigate } from "react-router-dom";
-import { useContext } from "react";
+import { React, useState, useEffect, useContext } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { UserContext } from "../Context/dataCont";
-import { Link } from "react-router-dom";
-const API_URL = import.meta.env.VITE_API_URL;
+import SectionTitle from "../Components/Title";
 
+const API_URL = import.meta.env.VITE_API_URL;
 
 const LoginForm = () => {
   const { authData, setAuthData, logout } = useContext(UserContext);
-    useEffect(() => {
-      logout()
-  }, []);
-    const [message, setMessage] = useState("");
+  const navigate = useNavigate();
+  const [message, setMessage] = useState("");
   const [formData, setFormData] = useState({
-    email:"",
-    password: ""
-    });
-    const navigate = useNavigate(); 
-  const handleChange = (e)=>{
-    setFormData({
-      ...formData, [e.target.name]: e.target.value,
-    });
-}
-
-
-  const handleSubmit =async (e)=> {
-    e.preventDefault();
-    try{
-      const response = await fetch( `${API_URL}/auth/login`,{
-      method: "POST",
-      headers: {
-          "Content-Type": "application/json",
-        },
-      body: JSON.stringify(formData)
-      });
-    const data = await response.json();
-    if (response.ok) {
-  setAuthData({
-    user: data.user,
-    token: data.token,
+    email: "",
+    password: "",
   });
-        const roleRedirects = {
-        admin: "/dash",
-        user: "/profile",
-      };
-      const targetRoute = roleRedirects[data.user.role] || "/";
-      navigate(targetRoute)
-} else {
-  setMessage(data.message)
-  console.log('login failed',data.message)
-}
+
+  useEffect(() => {
+    logout();
+  }, []);
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setAuthData({ user: data.user, token: data.token });
+        const roleRedirects = { admin: "/dash", user: "/profile" };
+        navigate(roleRedirects[data.user.role] || "/");
+      } else {
+        setMessage(data.message);
+      }
+    } catch (err) {
+      console.error("Network error:", err);
+      setMessage("⚠️ Network error. Please try again.");
     }
-    catch (error) {
-      console.error("Erreur réseau :", error);
-    }
-  }
+  };
+
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen gap-10 font-[Orbitron] border border-t-4 border-b-4 py-10">
-            <div className="flex flex-col justify-center items-center ">
-            <Title title={'Welcome back '}/>
-            <p>Log In and discover your profile.</p>
-            </div>
-      <div className="w-full max-w-md bg-gradient-to-br from-[#334A4F] to-[#5b8b96] backdrop-blur-md border-[2px] border-yellow-500/40 rounded-2xl shadow-2xl p-8">
-        <h2 className="text-3xl font-bold text-center text-yellow-400 mb-8 tracking-wide">
+    <div className="flex flex-col justify-center items-center min-h-screen gap-10 font-urbanist bg-gray-800 text-yellow-300 p-10">
+      <SectionTitle title="Welcome Back" />
+      <p className="text-center text-yellow-300 mb-6">
+        Log in and access your profile
+      </p>
+
+      <div className="w-full max-w-md bg-gray-900 p-8 rounded-2xl shadow-xl border border-yellow-300/40">
+        <h2 className="text-2xl font-bold text-center text-yellow-300 mb-6">
           Login
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="email"
-            placeholder="E-mail.."
             name="email"
+            placeholder="E-mail"
             onChange={handleChange}
-            className="w-full p-3 bg-[#334A4F]/60 text-white placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
+            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
           />
           <input
             type="password"
-            placeholder="Password.."
             name="password"
+            placeholder="Password"
             onChange={handleChange}
-            className="w-full p-3 bg-[#334A4F]/60 text-white placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
+            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
           />
 
           <button
             type="submit"
-            className="w-full py-3 text-lg font-semibold text-yellow-400 border-2 border-yellow-400 rounded-md bg-transparent hover:bg-yellow-400 hover:text-blue-950 transition-all duration-300"
+            className="w-full py-3 text-lg font-semibold text-yellow-300 border-2 border-yellow-300 rounded-md bg-transparent hover:bg-yellow-300 hover:text-gray-900 transition-all duration-300"
           >
             Log In
           </button>
         </form>
+
+        {message && (
+          <p className="mt-4 text-center text-red-500 font-medium">{message}</p>
+        )}
       </div>
-      <div className="errorM text-red-500 ">
-        {message}      
+
+      <div className="text-center text-yellow-300 mt-4">
+        By continuing, you agree to our Terms and Privacy Policy. <br />
+        Don't have an account?{" "}
+        <Link to="/signup" className="underline hover:text-yellow-400">
+          Sign Up
+        </Link>
       </div>
-      <div className="text-center">
-        By continuing, you agree to our Terms and Privacy Policy. <br /> 
-        You don't have an account? <Link to="/signup">Sign Up</Link>
-    </div>
     </div>
   );
 };
 
 export default LoginForm;
- 

@@ -13,22 +13,18 @@ export default function UpdateUser() {
   const { authData, setAuthData } = useContext(UserContext);
   const { data } = useContext(UserDataContext);
   const { id } = useParams();
+
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const authId= authData?.user?.id || authData?.user?._id
-  const isOwner = authId  === id;
-  console.log(isOwner)
 
-  const UPDATE_URL = isOwner
-    ? `${API_URL}/user/me`
-    : `${API_URL}/user`;
-  const PROFILE_URL = authData.user?`${API_URL}${authData.user?.profilePicture}` : sabAvatar;
+  const authId = authData?.user?.id || authData?.user?._id;
+  const isOwner = authId === id;
+
+  const UPDATE_URL = isOwner ? `${API_URL}/user/me` : `${API_URL}/user`;
+  const PROFILE_URL = authData.user ? `${API_URL}${authData.user?.profilePicture}` : sabAvatar;
+
   useEffect(() => {
-    if (authData?.user?.role === "admin") {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-    }
+    setIsAdmin(authData?.user?.role === "admin");
   }, [authData]);
 
   const [message, setMessage] = useState("");
@@ -41,7 +37,7 @@ export default function UpdateUser() {
     email: "",
     role: "user",
     dateOfBirth: null,
-    password: ""
+    password: "",
   };
 
   const [formData, setFormData] = useState(blankForm);
@@ -64,7 +60,7 @@ export default function UpdateUser() {
       dateOfBirth: targetUser.dateOfBirth
         ? new Date(targetUser.dateOfBirth)
         : null,
-      password: ""
+      password: "",
     });
   }, [authData, data, isOwner, id]);
 
@@ -81,12 +77,9 @@ export default function UpdateUser() {
 
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // file input handler
   const handleUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) setSelectedFile(file); 
+    if (e.target.files[0]) setSelectedFile(e.target.files[0]);
   };
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,11 +89,8 @@ export default function UpdateUser() {
       const formDataToSend = new FormData();
 
       for (let key in formData) {
-        if (key !== "password") {
-          if (formData[key] !== null && formData[key] !== "") {
-            formDataToSend.append(key, formData[key]);
-          }
-        }
+        if (key !== "password" && formData[key] !== null && formData[key] !== "")
+          formDataToSend.append(key, formData[key]);
       }
 
       if (formData.password)
@@ -110,9 +100,7 @@ export default function UpdateUser() {
         formDataToSend.append("file", selectedFile);
 
       const response = await fetch(`${UPDATE_URL}/${id}`, {
-        headers: {
-          Authorization: `Bearer ${authData.token}`,
-        },
+        headers: { Authorization: `Bearer ${authData.token}` },
         method: "PATCH",
         body: formDataToSend,
       });
@@ -124,9 +112,7 @@ export default function UpdateUser() {
 
         if (!data.user.isVerified) {
           setIsPending(true);
-          setMessage(
-            "✉️ Your email was changed. Please verify it from your inbox."
-          );
+          setMessage("✉️ Your email was changed. Please verify it.");
         } else {
           setFormData(blankForm);
           setMessage("✅ Profile updated successfully!");
@@ -137,63 +123,65 @@ export default function UpdateUser() {
       }
     } catch (err) {
       console.error(err);
-      setMessage("⚠️ Network error. Please try again.");
+      setMessage("⚠️ Network error.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col justify-center items-center min-h-screen ml-[200px] py-10 font-urbanist">
+    <div className="flex flex-col justify-center items-center min-h-screen py-10 font-urbanist bg-gray-900">
+
       <div className="mb-8 text-center">
         <Title
-          title={
-            isOwner
-              ? "Modifier Votre Profil"
-              : "Modifier l'utilisateur"
-          }
+          title={isOwner ? "Modifier Votre Profil" : "Modifier l'utilisateur"}
+          className="text-yellow-300"
         />
       </div>
 
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-              
-        {/* PROFILE PICTURE */}
-        <div className={`flex justify-center mb-6 ${isOwner ? "" : "hidden"}`}>
-          <label htmlFor="file">
-            <img
-              src={PROFILE_URL}
-              alt="Profile"
-              loading="lazy"
-              className="w-40 h-40 object-cover rounded-full border-4 border-gray-300 shadow cursor-pointer hover:opacity-90"
-            />
-          </label>
-          <input 
-            type="file" 
-            name="file" 
-            id="file" 
-            onChange={handleUpload}
-            className="hidden"/>
-        </div>
+      {/* FORM PANEL */}
+      <div className="w-full max-w-md bg-gray-800/70 backdrop-blur-xl rounded-2xl 
+                      border border-yellow-300/20 shadow-xl p-8">
+
+        {/* PROFILE PIC */}
+        {isOwner && (
+          <div className="flex justify-center mb-6">
+            <label htmlFor="file">
+              <img
+                src={PROFILE_URL}
+                alt="Profile"
+                className="w-40 h-40 object-cover rounded-full 
+                           border-4 border-yellow-300/40 shadow-[0_0_20px_rgba(255,200,80,0.2)]
+                           cursor-pointer hover:opacity-90 transition"
+              />
+            </label>
+            <input type="file" id="file" onChange={handleUpload} className="hidden" />
+          </div>
+        )}
+
         <form className="space-y-6" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="name"
-            placeholder="Nom"
-            value={formData.name || ""}
-            onChange={handleChange}
-            className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 text-gray-700 transition-colors placeholder-gray-400"
-          />
 
-          <input
-            type="text"
-            name="lastname"
-            placeholder="Prénom"
-            value={formData.lastname || ""}
-            onChange={handleChange}
-            className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 text-gray-700 transition-colors placeholder-gray-400"
-          />
+          {/* INPUT TEMPLATE */}
+          {[
+            { name: "name", placeholder: "Nom" },
+            { name: "lastname", placeholder: "Prénom" },
+            { name: "email", placeholder: "E-mail", type: "email" }
+          ].map((field) => (
+            <input
+              key={field.name}
+              name={field.name}
+              type={field.type || "text"}
+              placeholder={field.placeholder}
+              value={formData[field.name] || ""}
+              onChange={handleChange}
+              className="w-full bg-transparent border-b-2 
+                       border-yellow-300/30 focus:border-yellow-300 
+                       text-yellow-200 placeholder-yellow-300/40
+                       outline-none py-2 transition"
+            />
+          ))}
 
-          {/* Modern calendar input */}
+          {/* DATE PICKER */}
           <div className="relative">
             <input
               type="text"
@@ -205,14 +193,15 @@ export default function UpdateUser() {
                   : ""
               }
               placeholder="Date de naissance"
-              className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 text-gray-700 transition-colors placeholder-gray-400 cursor-pointer"
+              className="w-full bg-transparent border-b-2 
+                         border-yellow-300/30 focus:border-yellow-300 
+                         text-yellow-200 placeholder-yellow-300/40
+                         outline-none py-2 cursor-pointer transition"
             />
 
             {showCalendar && (
-              <div
-                ref={calendarRef}
-                className="absolute z-50 mt-1 bg-white/20 backdrop-blur-md shadow-lg rounded-lg p-2"
-              >
+              <div className="absolute z-50 mt-2 bg-gray-900 rounded-xl p-3 
+                              shadow-xl border border-yellow-300/20">
                 <DayPicker
                   mode="single"
                   selected={formData.dateOfBirth}
@@ -221,73 +210,69 @@ export default function UpdateUser() {
                   fromYear={1900}
                   toYear={new Date().getFullYear()}
                   captionLayout="dropdown"
-                  className="text-sm 
-                    [&_button]:px-1 [&_button]:py-0.5 
-                    [&_day]:w-6 [&_day]:h-6 [&_day]:text-sm 
-                    [&_month]:bg-white/10 [&_month]:rounded-md"
+                  className="text-yellow-200"
                 />
               </div>
             )}
           </div>
 
-          <input
-            type="email"
-            name="email"
-            placeholder="E-mail"
-            value={formData.email || ""}
-            onChange={handleChange}
-            className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 text-gray-700 transition-colors placeholder-gray-400"
-          />
-
+          {/* ROLE */}
           <select
             name="role"
-            value={formData.role || "user"}
+            value={formData.role}
             onChange={handleChange}
             disabled={!isAdmin}
-            className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 bg-transparent text-gray-700 transition-colors"
+            className="w-full bg-transparent border-b-2 
+                       border-yellow-300/30 focus:border-yellow-300 
+                       text-yellow-200 outline-none py-2 transition"
           >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
+            <option className="text-gray-900" value="user">User</option>
+            <option className="text-gray-900" value="admin">Admin</option>
           </select>
 
+          {/* PASSWORD */}
           <input
             type="password"
             name="password"
             placeholder="Mot de passe actuel"
-            value={formData.password || ""}
+            value={formData.password}
             onChange={handleChange}
-            className="w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none py-2 text-gray-700 transition-colors placeholder-gray-400"
+            className="w-full bg-transparent border-b-2 
+                       border-yellow-300/30 focus:border-yellow-300 
+                       text-yellow-200 placeholder-yellow-300/40
+                       outline-none py-2 transition"
           />
 
+          {/* SUBMIT */}
           <button
             type="submit"
             disabled={loading || isPending}
             className={`
-              w-full py-3 font-semibold rounded-lg flex items-center justify-center gap-2
+              w-full py-3 rounded-lg font-semibold
               transition-all duration-300
+              shadow-[0_0_10px_rgba(255,200,80,0.4)]
               ${
                 isPending
-                  ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : loading
-                  ? "bg-blue-400 text-white cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600 text-white shadow-md hover:shadow-lg"
+                  ? "bg-yellow-300/60 text-gray-900 cursor-not-allowed"
+                  : "bg-yellow-300 text-gray-900 hover:bg-yellow-200"
               }
             `}
           >
             {loading && !isPending && (
-              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin inline-block mr-2" />
             )}
 
-            {isPending
-              ? "Pending Verification..."
-              : loading
-              ? "Saving..."
-              : "Enregistrer"}
+            {isPending ? "En attente de vérification…" :
+             loading ? "Sauvegarde…" :
+             "Enregistrer"}
           </button>
         </form>
 
+        {/* MESSAGE */}
         {message && (
-          <p className="mt-4 text-center text-red-500 font-medium">
+          <p className="mt-4 text-center text-yellow-300 font-medium">
             {message}
           </p>
         )}

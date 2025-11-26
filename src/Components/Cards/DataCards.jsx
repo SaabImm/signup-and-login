@@ -22,7 +22,7 @@ export default function DataCards({ userItem }) {
       {/* Action overlay */}
       {active && (
         <div className="absolute inset-0 flex flex-col justify-center items-center gap-4 bg-black/40 rounded-xl transition-opacity">
-          <Link to={`/dash/update/${userItem._id}`}>
+          <Link to={`/dash/adminUser/${userItem._id}`}>
           <button className="basis-1 px-8 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-lg shadow-black/30">
              Edit 
           </button>
