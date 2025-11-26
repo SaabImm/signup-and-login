@@ -15,7 +15,8 @@ export default function UpdateUser() {
   const { id } = useParams();
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const isOwner = authData?.user?.id === id;
+  const authId= authData?.user?.id || authData?.user?._id
+  const isOwner = authId  === id;
   console.log(isOwner)
 
   const UPDATE_URL = isOwner
