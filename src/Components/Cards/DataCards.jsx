@@ -17,12 +17,13 @@ export default function DataCards({ userItem }) {
         <h3 className="text-xl font-semibold">{userItem.name} {userItem.lastname}</h3>
         <p className="text-gray-300">{userItem.email}</p>
         <p className="text-gray-400">Role: {userItem.role}</p>
+        <p className="text-gray-400">Status: {userItem.isAdminVerified? "Validated" : "Pending"}</p>
       </div>
 
       {/* Action overlay */}
       {active && (
         <div className="absolute inset-0 flex flex-col justify-center items-center gap-4 bg-black/40 rounded-xl transition-opacity">
-          <Link to={`/dash/adminUser/${userItem._id}`}>
+          <Link to={`/adminUser/${userItem._id}`}>
           <button className="basis-1 px-8 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-lg shadow-black/30">
              Edit 
           </button>

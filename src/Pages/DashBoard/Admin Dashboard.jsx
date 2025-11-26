@@ -39,25 +39,26 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="ml-[220px] p-10 min-h-screen bg-gray-800/80 backdrop-blur-xl font-urbanist">
-      <SectionTitle title="Bienvenue dans le tableau de bord Admin" />
+  <div className="ml-[220px] p-10 min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 font-urbanist">
+    <SectionTitle title="Bienvenue dans le tableau de bord Admin" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cards.map((card, index) => (
-          <div
-            key={index}
-            onClick={card.onClick}
-            className="bg-gray-900 text-yellow-300 p-6 rounded-2xl shadow-lg hover:shadow-xl cursor-pointer transition-all duration-300 flex flex-col justify-between"
-          >
-            <h2 className="text-xl font-semibold mb-2">{card.title}</h2>
-            <p className="text-lg font-medium">{card.count}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-10 text-yellow-300">
-        {/* Additional dashboard info can go here */}
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {cards.map((card, index) => (
+        <div
+          key={index}
+          onClick={card.onClick}
+          className="bg-gray-900 text-yellow-300 p-6 rounded-2xl shadow-lg hover:shadow-xl cursor-pointer transition-all duration-300 flex flex-col justify-between"
+        >
+          <h2 className="text-xl font-semibold mb-2">{card.title}</h2>
+          <p className="text-lg font-medium">{card.count}</p>
+        </div>
+      ))}
     </div>
-  );
+
+    <div className="mt-10 text-yellow-300">
+      {/* Additional dashboard info can go here */}
+    </div>
+  </div>
+);
+
 }

@@ -20,9 +20,10 @@ export default function App() {
     <>
       <Routes>
           <Route path="/" element={<MainLayout/>}>
-           <Route index element={<LoginForm/>} />
-           <Route path="signup" element={<FormulaireCNOA/>} />
+            <Route index element={<LoginForm/>} />
+            <Route path="signup" element={<FormulaireCNOA/>} />
             <Route path="profile" element={<ProfilePage/>} />
+            <Route path="adminUser/:id" element={<AdminUserView />} />
           </Route>
           <Route path="/auth" element={<AuthLayout/>} >
             <Route path="verify-pending" element={<VerifyPendingPage />} />
@@ -35,7 +36,7 @@ export default function App() {
             <Route path="allUsers" element={<GetUsers />} />
             <Route path="create" element={<CreateUser />} />
             <Route path="update/:id" element={<UpdateUser />} />
-            <Route path="adminUser/:id" element={<AdminUserView />} />
+            
             <Route path="resetPsw" element={<ResetPassword />} />
             <Route path="delete/:id" element={<DeleteUser />} />
         </Route>

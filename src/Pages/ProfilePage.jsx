@@ -1,11 +1,15 @@
-import Title from '../Components/Title'
+import Title from '../Components/Title';
 import { useContext } from "react";
 import { UserContext } from "../Context/dataCont";
+import Navbar from '../Components/Navbar/Navbar';
 
-export default function ProfilePage() {
+export default function ProfilePage({ user }) {
   const { authData } = useContext(UserContext);
   const API_URL = import.meta.env.VITE_API_URL;
-  const PROFILE_URL = `${API_URL}${authData.user?.profilePicture}`;
+
+  // Use prop if provided, otherwise fallback to authData.user
+  const displayUser = user || authData.user;
+  const PROFILE_URL = `${API_URL}${displayUser?.profilePicture}`;
 
   const roleColors = {
     admin: "bg-red-200/20 text-red-300 border-red-400/40",
@@ -13,7 +17,15 @@ export default function ProfilePage() {
     moderator: "bg-purple-200/20 text-purple-300 border-purple-400/40"
   };
 
+  const verificationTag = displayUser?.isAdminVerified
+    ? "bg-slate-200/20 text-slate-100 border-slate-300/30"
+    : "bg-yellow-400/20 text-yellow-300 border-yellow-400/40";
+
+  const verificationText = displayUser?.isAdminVerified ? "Validated" : "Pending Validation";
+
   return (
+    <>
+    <Navbar/>
     <div className="min-h-screen bg-gray-900 pb-16">
 
       {/* --- GOLD COVER --- */}
@@ -31,24 +43,33 @@ export default function ProfilePage() {
         />
 
         {/* User main info */}
-        <div className="flex-1">
+        <div className="flex-1 space-y-2">
           <h2 className="text-3xl font-semibold text-white tracking-tight">
-            {authData.user?.name} {authData.user?.lastname}
+            {displayUser?.name} {displayUser?.lastname}
           </h2>
 
-          <p className="text-gray-300 text-lg mt-1">{authData.user?.email}</p>
+          <p className="text-gray-300 text-lg">{displayUser?.email}</p>
 
-          {/* Role Badge */}
-          <span
-            className={`mt-3 inline-block px-3 py-1 rounded-full border text-sm font-medium 
-              ${roleColors[authData.user?.role] || "bg-yellow-300/20 text-yellow-300 border-yellow-400/40"}`}
-          >
-            {authData.user?.role.toUpperCase()}
-          </span>
+          <div className="flex items-center gap-3 mt-2 flex-wrap">
+            {/* Role Badge */}
+            <span
+              className={`px-3 py-1 rounded-full border text-sm font-medium 
+                ${roleColors[displayUser?.role] || "bg-yellow-300/20 text-yellow-300 border-yellow-400/40"}`}
+            >
+              {displayUser?.role.toUpperCase()}
+            </span>
+
+            {/* Verification Badge */}
+            <span
+              className={`px-3 py-1 rounded-full border text-sm font-medium ${verificationTag}`}
+            >
+              {verificationText}
+            </span>
+          </div>
         </div>
 
         {/* Optional Admin Tag */}
-        {authData.user?.role === "admin" && (
+        {displayUser?.role === "admin" && (
           <div className="absolute top-6 right-6 bg-yellow-300/10 px-4 py-1 rounded-full text-sm shadow-md text-yellow-200 border border-yellow-300/20">
             ADMIN ACCESS
           </div>
@@ -64,15 +85,14 @@ export default function ProfilePage() {
         </div>
 
         <div className="grid grid-cols-2 gap-8 text-gray-200">
-
-          <DetailBox label="Name" value={authData.user?.name} />
-          <DetailBox label="Last Name" value={authData.user?.lastname} />
-          <DetailBox label="Role" value={authData.user?.role} />
-          <DetailBox label="Email" value={authData.user?.email} />
-
+          <DetailBox label="Name" value={displayUser?.name} />
+          <DetailBox label="Last Name" value={displayUser?.lastname} />
+          <DetailBox label="Role" value={displayUser?.role} />
+          <DetailBox label="Email" value={displayUser?.email} />
         </div>
       </div>
     </div>
+    </>
   );
 }
 

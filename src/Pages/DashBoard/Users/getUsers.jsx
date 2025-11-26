@@ -37,7 +37,6 @@ export default function GetUsers() {
   }, [authData.token]);
 
     const searchableFields = ["name", "lastname", "email"];
-
     const displayedUsers = data.users.filter((user) => {
     // check if any searchable field matches the keyword
     const matchesSearch = searchableFields.some((field) =>
