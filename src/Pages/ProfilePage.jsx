@@ -2,16 +2,19 @@ import Title from '../Components/Title';
 import { useContext } from "react";
 import { UserContext } from "../Context/dataCont";
 import Navbar from '../Components/Navbar/Navbar';
-
+import sabAvatar from '../assets/SabrinaAvatar.jpg'
+import FileCard from '../Components/Cards/FileCrad'
+import AddFileCard from '../Components/Cards/AddFileCard';
 export default function ProfilePage({ user }) {
-  const { authData } = useContext(UserContext);
+  const { authData, setAuthData } = useContext(UserContext);
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Use prop if provided, otherwise fallback to authData.user
   const displayUser = user || authData.user;
-  const PROFILE_URL = `${API_URL}${displayUser?.profilePicture}`;
-
-  const roleColors = {
+    const PROFILE_URL = authData?.user?.profilePicture ? authData.user.profilePicture :sabAvatar;
+    const files = displayUser?.files ? displayUser.files :[];
+    
+    const roleColors = {
     admin: "bg-red-200/20 text-red-300 border-red-400/40",
     user: "bg-blue-200/20 text-blue-300 border-blue-400/40",
     moderator: "bg-purple-200/20 text-purple-300 border-purple-400/40"
@@ -22,7 +25,29 @@ export default function ProfilePage({ user }) {
     : "bg-yellow-400/20 text-yellow-300 border-yellow-400/40";
 
   const verificationText = displayUser?.isAdminVerified ? "Validated" : "Pending Validation";
+  
+      const handleUpload = async (file) => {
 
+        const uploadData = new FormData();
+        uploadData.append("file", file);
+        uploadData.append("folder", "uploads");
+        const response = await fetch(`${API_URL}/upload/${displayUser._id}`, {
+          method: "POST",
+          body: uploadData,
+        });
+
+        const data = await response.json();
+        console.log("this is the data",data)
+        setAuthData(prev => ({
+          token: data.token || prev.token,
+          user: data.user || prev.user
+          }));
+        if (!response.ok) {
+         console.log(data.message)
+          return;
+        }
+
+      };
   return (
     <>
     <Navbar/>
@@ -36,11 +61,11 @@ export default function ProfilePage({ user }) {
                       border border-yellow-400/30 rounded-xl shadow-xl p-10 flex gap-10 items-center relative">
 
         {/* Avatar */}
-        <img
+        {displayUser?.profilePicture && (<img
           src={PROFILE_URL}
           alt="Profile"
           className="w-40 h-40 object-cover rounded-full border-4 border-yellow-300 shadow-[0_0_20px_rgba(255,215,100,0.4)]"
-        />
+        />)}
 
         {/* User main info */}
         <div className="flex-1 space-y-2">
@@ -89,6 +114,22 @@ export default function ProfilePage({ user }) {
           <DetailBox label="Last Name" value={displayUser?.lastname} />
           <DetailBox label="Role" value={displayUser?.role} />
           <DetailBox label="Email" value={displayUser?.email} />
+        </div>
+      </div>
+
+      {/* --- Files --- */}
+      <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl 
+                      rounded-xl shadow-xl border border-yellow-400/20 p-10">
+
+        <div className="flex justify-between items-center mb-6">
+          <Title title="Files" textColor="text-yellow-300" />
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+            {files.map((file) => (
+              <FileCard key={file._id} file={file} />
+            ))}
+            <AddFileCard onUpload={handleUpload}/>
         </div>
       </div>
     </div>

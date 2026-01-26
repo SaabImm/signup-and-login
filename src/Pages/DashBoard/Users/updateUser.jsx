@@ -21,7 +21,7 @@ export default function UpdateUser() {
   const isOwner = authId === id;
 
   const UPDATE_URL = isOwner ? `${API_URL}/user/me` : `${API_URL}/user`;
-  const PROFILE_URL = authData.user ? `${API_URL}${authData.user?.profilePicture}` : sabAvatar;
+
 
   useEffect(() => {
     setIsAdmin(authData?.user?.role === "admin");
@@ -36,12 +36,17 @@ export default function UpdateUser() {
     lastname: "",
     email: "",
     role: "user",
+    profilePicture: "",
     dateOfBirth: null,
     password: "",
   };
 
   const [formData, setFormData] = useState(blankForm);
-  const calendarRef = useRef();
+  
+  const PROFILE_URL =
+  formData.profilePicture ||
+  authData?.user?.profilePicture ||
+  sabAvatar;
 
   useEffect(() => {
     if (!authData?.user && !data?.users) return;
@@ -57,6 +62,7 @@ export default function UpdateUser() {
       lastname: targetUser.lastname || "",
       email: targetUser.email || "",
       role: targetUser.role || "user",
+      profilePicture: targetUser.profilePicture,
       dateOfBirth: targetUser.dateOfBirth
         ? new Date(targetUser.dateOfBirth)
         : null,
@@ -74,60 +80,76 @@ export default function UpdateUser() {
     setFormData((prev) => ({ ...prev, dateOfBirth: date }));
     setShowCalendar(false);
   };
+  const handleUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-  const [selectedFile, setSelectedFile] = useState(null);
 
-  const handleUpload = (e) => {
-    if (e.target.files[0]) setSelectedFile(e.target.files[0]);
+  const uploadData = new FormData();
+  uploadData.append("file", file);
+  uploadData.append("folder", "profile");
+  const response = await fetch(`${API_URL}/upload/${id}`, {
+    method: "POST",
+    body: uploadData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    setMessage(data.message || "Upload failed");
+    return;
+  }
+
+  // Save URL in form state (NOT auth context)
+  setFormData((prev) => ({
+    ...prev,
+    profilePicture: data.file.url,
+  }));
+};
+
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const payload = {
+    name: formData.name,
+    lastname: formData.lastname,
+    email: formData.email,
+    role: formData.role,
+    dateOfBirth: formData.dateOfBirth,
+    profilePicture: formData.profilePicture,
+    password: formData.password,
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const response = await fetch(`${UPDATE_URL}/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${authData.token}`,
+    },
+    body: JSON.stringify(payload),
+  });
 
-    try {
-      const formDataToSend = new FormData();
+  const data = await response.json();
 
-      for (let key in formData) {
-        if (key !== "password" && formData[key] !== null && formData[key] !== "")
-          formDataToSend.append(key, formData[key]);
+  if (!response.ok) {
+    setMessage(data.message || "Update failed");
+    return;
+  }
+setAuthData(prev => ({
+  token: data.token || prev.token,
+  user: data.user
+    ? {
+        ...prev.user,
+        ...data.user,
+        files: data.user.files ?? prev.user.files ?? []
       }
+    : prev.user
+}));
 
-      if (formData.password)
-        formDataToSend.append("password", formData.password);
+  setMessage("✅ Profile updated");
+};
 
-      if (selectedFile)
-        formDataToSend.append("file", selectedFile);
-
-      const response = await fetch(`${UPDATE_URL}/${id}`, {
-        headers: { Authorization: `Bearer ${authData.token}` },
-        method: "PATCH",
-        body: formDataToSend,
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        if (isOwner) setAuthData(data);
-
-        if (!data.user.isVerified) {
-          setIsPending(true);
-          setMessage("✉️ Your email was changed. Please verify it.");
-        } else {
-          setFormData(blankForm);
-          setMessage("✅ Profile updated successfully!");
-          setIsPending(false);
-        }
-      } else {
-        setMessage(data.message || "❌ Update failed.");
-      }
-    } catch (err) {
-      console.error(err);
-      setMessage("⚠️ Network error.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="flex flex-col justify-center items-center min-h-screen py-10 font-urbanist bg-gray-900">
@@ -150,9 +172,12 @@ export default function UpdateUser() {
               <img
                 src={PROFILE_URL}
                 alt="Profile"
+                onError={(e) => {
+                  e.currentTarget.src = sabAvatar;
+                }}
                 className="w-40 h-40 object-cover rounded-full 
-                           border-4 border-yellow-300/40 shadow-[0_0_20px_rgba(255,200,80,0.2)]
-                           cursor-pointer hover:opacity-90 transition"
+                          border-4 border-yellow-300/40 shadow-[0_0_20px_rgba(255,200,80,0.2)]
+                          cursor-pointer hover:opacity-90 transition"
               />
             </label>
             <input type="file" id="file" onChange={handleUpload} className="hidden" />

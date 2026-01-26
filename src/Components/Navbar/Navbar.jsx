@@ -11,7 +11,9 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef();
   const id = authData.user?._id || authData.user?.id;
-
+      const PROFILE_URL =
+      authData?.user?.profilePicture ||
+      sabAvatar;
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -53,7 +55,7 @@ export default function Navbar() {
             >
               <span className="font-semibold">{authData.user?.name}</span>
               <img
-                src={sabAvatar}
+                src={PROFILE_URL}
                 alt="Avatar"
                 className="w-8 h-8 rounded-full border-2 border-yellow-300"
               />
