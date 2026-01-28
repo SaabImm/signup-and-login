@@ -1,20 +1,30 @@
 import Title from '../Components/Title';
-import { useContext } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { UserContext } from "../Context/dataCont";
 import Navbar from '../Components/Navbar/Navbar';
-import sabAvatar from '../assets/SabrinaAvatar.jpg'
-import FileCard from '../Components/Cards/FileCrad'
+import sabAvatar from '../assets/SabrinaAvatar.jpg';
+import FileCard from '../Components/Cards/FileCrad';
 import AddFileCard from '../Components/Cards/AddFileCard';
+
 export default function ProfilePage({ user }) {
   const { authData, setAuthData } = useContext(UserContext);
   const API_URL = import.meta.env.VITE_API_URL;
 
-  // Use prop if provided, otherwise fallback to authData.user
-  const displayUser = user || authData.user;
-    const PROFILE_URL = authData?.user?.profilePicture ? authData.user.profilePicture :sabAvatar;
-    const files = displayUser?.files ? displayUser.files :[];
-    
-    const roleColors = {
+  const owner = user || authData.user;
+  const [displayUser, setDisplayUser] = useState(owner);
+  const isOwner = authData.user === displayUser;
+
+  const [popup, setPopup] = useState(null); // popup state
+
+  useEffect(() => {
+    if (user) setDisplayUser(user);
+    else if (authData?.user) setDisplayUser(authData.user);
+  }, [user, authData?.user]);
+
+  const PROFILE_URL = authData?.user?.profilePicture || sabAvatar;
+  const files = displayUser?.files || [];
+
+  const roleColors = {
     admin: "bg-red-200/20 text-red-300 border-red-400/40",
     user: "bg-blue-200/20 text-blue-300 border-blue-400/40",
     moderator: "bg-purple-200/20 text-purple-300 border-purple-400/40"
@@ -25,114 +35,221 @@ export default function ProfilePage({ user }) {
     : "bg-yellow-400/20 text-yellow-300 border-yellow-400/40";
 
   const verificationText = displayUser?.isAdminVerified ? "Validated" : "Pending Validation";
-  
-      const handleUpload = async (file) => {
 
-        const uploadData = new FormData();
-        uploadData.append("file", file);
-        uploadData.append("folder", "uploads");
-        const response = await fetch(`${API_URL}/upload/${displayUser._id}`, {
-          method: "POST",
-          body: uploadData,
-        });
+  // Auto-dismiss popup
+  useEffect(() => {
+    if (!popup) return;
+    const timer = setTimeout(() => setPopup(null), 3000);
+    return () => clearTimeout(timer);
+  }, [popup]);
 
-        const data = await response.json();
-        console.log("this is the data",data)
-        setAuthData(prev => ({
-          token: data.token || prev.token,
-          user: data.user || prev.user
-          }));
-        if (!response.ok) {
-         console.log(data.message)
-          return;
-        }
+  // -------------------- HANDLERS --------------------
+  const handleUpload = async (file) => {
+    try {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      uploadData.append("folder", "uploads");
 
-      };
+      const response = await fetch(`${API_URL}/upload/${displayUser._id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${authData.token}` },
+        body: uploadData,
+      });
+
+      const data = await response.json();
+
+      if (response.status === 413) {
+        setPopup({ type: "error", message: data.message || "File is too large" });
+        return;
+      }
+
+      if (!response.ok) {
+        setPopup({ type: "error", message: data.message || "Upload failed" });
+        return;
+      }
+
+      if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
+      else setDisplayUser(data.user);
+
+      setPopup({ type: "success", message: "File uploaded successfully ✅" });
+
+    } catch (err) {
+      console.error(err);
+      setPopup({ type: "error", message: "Network error. Please try again." });
+    }
+  };
+
+  const handleReplace = async (file, newFile) => {
+    try {
+      const uploadData = new FormData();
+      uploadData.append("file", newFile);
+      uploadData.append("folder", "uploads");
+
+      const response = await fetch(`${API_URL}/upload/${file._id}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${authData.token}` },
+        body: uploadData,
+      });
+
+      const data = await response.json();
+
+      if (response.status === 413) {
+        setPopup({ type: "error", message: data.message || "File is too large" });
+        return;
+      }
+
+      if (!response.ok) {
+        setPopup({ type: "error", message: data.message || "Replace failed" });
+        return;
+      }
+
+      if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
+      else setDisplayUser(data.user);
+
+      setPopup({ type: "success", message: "File replaced successfully ✅" });
+
+    } catch (err) {
+      console.error(err);
+      setPopup({ type: "error", message: "Network error. Please try again." });
+    }
+  };
+
+  const handleDelete = async (file) => {
+    try {
+      const response = await fetch(`${API_URL}/upload/${file._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authData.token}` },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setPopup({ type: "error", message: data.message || "Delete failed" });
+        return;
+      }
+
+      if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
+      else setDisplayUser(data.user);
+
+      setPopup({ type: "success", message: "File deleted successfully ✅" });
+
+    } catch (err) {
+      console.error(err);
+      setPopup({ type: "error", message: "Network error. Please try again." });
+    }
+  };
+
+  // -------------------- RENDER --------------------
   return (
     <>
-    <Navbar/>
-    <div className="min-h-screen bg-gray-900 pb-16">
+      <Navbar />
 
-      {/* --- GOLD COVER --- */}
-      <div className="h-40 bg-yellow-400/80 shadow-md"></div>
+      <div className="min-h-screen bg-gray-900 pb-16">
 
-      {/* --- PROFILE CARD --- */}
-      <div className="w-3/4 mx-auto -mt-20 bg-gray-800/80 backdrop-blur-xl 
-                      border border-yellow-400/30 rounded-xl shadow-xl p-10 flex gap-10 items-center relative">
+        {/* --- GOLD COVER --- */}
+        <div className="h-40 bg-yellow-400/80 shadow-md"></div>
 
-        {/* Avatar */}
-        {displayUser?.profilePicture && (<img
-          src={PROFILE_URL}
-          alt="Profile"
-          className="w-40 h-40 object-cover rounded-full border-4 border-yellow-300 shadow-[0_0_20px_rgba(255,215,100,0.4)]"
-        />)}
+        {/* --- PROFILE CARD --- */}
+        <div className="w-3/4 mx-auto -mt-20 bg-gray-800/80 backdrop-blur-xl 
+                        border border-yellow-400/30 rounded-xl shadow-xl p-10 flex gap-10 items-center relative">
 
-        {/* User main info */}
-        <div className="flex-1 space-y-2">
-          <h2 className="text-3xl font-semibold text-white tracking-tight">
-            {displayUser?.name} {displayUser?.lastname}
-          </h2>
+          {/* Avatar */}
+          {displayUser?.profilePicture && (
+            <img
+              src={PROFILE_URL}
+              alt="Profile"
+              className="w-40 h-40 object-cover rounded-full border-4 border-yellow-300 shadow-[0_0_20px_rgba(255,215,100,0.4)]"
+            />
+          )}
 
-          <p className="text-gray-300 text-lg">{displayUser?.email}</p>
+          {/* User main info */}
+          <div className="flex-1 space-y-2">
+            <h2 className="text-3xl font-semibold text-white tracking-tight">
+              {displayUser?.name} {displayUser?.lastname}
+            </h2>
 
-          <div className="flex items-center gap-3 mt-2 flex-wrap">
-            {/* Role Badge */}
-            <span
-              className={`px-3 py-1 rounded-full border text-sm font-medium 
-                ${roleColors[displayUser?.role] || "bg-yellow-300/20 text-yellow-300 border-yellow-400/40"}`}
-            >
-              {displayUser?.role.toUpperCase()}
-            </span>
+            <p className="text-gray-300 text-lg">{displayUser?.email}</p>
 
-            {/* Verification Badge */}
-            <span
-              className={`px-3 py-1 rounded-full border text-sm font-medium ${verificationTag}`}
-            >
-              {verificationText}
-            </span>
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              {/* Role Badge */}
+              <span
+                className={`px-3 py-1 rounded-full border text-sm font-medium 
+                  ${roleColors[displayUser?.role] || "bg-yellow-300/20 text-yellow-300 border-yellow-400/40"}`}
+              >
+                {displayUser?.role.toUpperCase()}
+              </span>
+
+              {/* Verification Badge */}
+              <span
+                className={`px-3 py-1 rounded-full border text-sm font-medium ${verificationTag}`}
+              >
+                {verificationText}
+              </span>
+            </div>
+          </div>
+
+          {/* Optional Admin Tag */}
+          {displayUser?.role === "admin" && (
+            <div className="absolute top-6 right-6 bg-yellow-300/10 px-4 py-1 rounded-full text-sm shadow-md text-yellow-200 border border-yellow-300/20">
+              ADMIN ACCESS
+            </div>
+          )}
+        </div>
+
+        {/* --- PERSONAL DETAILS CARD --- */}
+        <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl 
+                        rounded-xl shadow-xl border border-yellow-400/20 p-10">
+
+          <div className="flex justify-between items-center mb-6">
+            <Title title="Personal Details" textColor="text-yellow-300" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-8 text-gray-200">
+            <DetailBox label="Name" value={displayUser?.name} />
+            <DetailBox label="Last Name" value={displayUser?.lastname} />
+            <DetailBox label="Role" value={displayUser?.role} />
+            <DetailBox label="Email" value={displayUser?.email} />
           </div>
         </div>
 
-        {/* Optional Admin Tag */}
-        {displayUser?.role === "admin" && (
-          <div className="absolute top-6 right-6 bg-yellow-300/10 px-4 py-1 rounded-full text-sm shadow-md text-yellow-200 border border-yellow-300/20">
-            ADMIN ACCESS
+        {/* --- Files --- */}
+        <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl 
+                        rounded-xl shadow-xl border border-yellow-400/20 p-10">
+
+          <div className="flex justify-between items-center mb-6">
+            <Title title="Files" textColor="text-yellow-300" />
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+            {files.map((file) => (
+              <FileCard
+                key={file._id}
+                file={file}
+                handleDelete={handleDelete}
+                handleReplace={handleReplace}
+              />
+            ))}
+            <AddFileCard onUpload={handleUpload} />
+          </div>
+        </div>
+
+        {/* --- POPUP --- */}
+        {popup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <div
+              className={`px-6 py-4 rounded-lg shadow-xl border text-sm font-medium pointer-events-auto
+                transform transition-all duration-300
+                ${
+                  popup.type === "error"
+                    ? "bg-red-500/20 text-red-300 border-red-400/40"
+                    : "bg-green-500/20 text-green-300 border-green-400/40"
+                }`}
+            >
+              {popup.message}
+            </div>
           </div>
         )}
       </div>
-
-      {/* --- PERSONAL DETAILS CARD --- */}
-      <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl 
-                      rounded-xl shadow-xl border border-yellow-400/20 p-10">
-
-        <div className="flex justify-between items-center mb-6">
-          <Title title="Personal Details" textColor="text-yellow-300" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-8 text-gray-200">
-          <DetailBox label="Name" value={displayUser?.name} />
-          <DetailBox label="Last Name" value={displayUser?.lastname} />
-          <DetailBox label="Role" value={displayUser?.role} />
-          <DetailBox label="Email" value={displayUser?.email} />
-        </div>
-      </div>
-
-      {/* --- Files --- */}
-      <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl 
-                      rounded-xl shadow-xl border border-yellow-400/20 p-10">
-
-        <div className="flex justify-between items-center mb-6">
-          <Title title="Files" textColor="text-yellow-300" />
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {files.map((file) => (
-              <FileCard key={file._id} file={file} />
-            ))}
-            <AddFileCard onUpload={handleUpload}/>
-        </div>
-      </div>
-    </div>
     </>
   );
 }

@@ -90,6 +90,9 @@ export default function UpdateUser() {
   uploadData.append("folder", "profile");
   const response = await fetch(`${API_URL}/upload/${id}`, {
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${authData.token}`,
+      },
     body: uploadData,
   });
 
@@ -136,7 +139,7 @@ const handleSubmit = async (e) => {
     setMessage(data.message || "Update failed");
     return;
   }
-setAuthData(prev => ({
+if(isOwner) {setAuthData(prev => ({
   token: data.token || prev.token,
   user: data.user
     ? {
@@ -145,7 +148,7 @@ setAuthData(prev => ({
         files: data.user.files ?? prev.user.files ?? []
       }
     : prev.user
-}));
+}));}
 
   setMessage("✅ Profile updated");
 };
