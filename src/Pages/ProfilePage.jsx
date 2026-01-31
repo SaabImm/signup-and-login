@@ -12,22 +12,23 @@ export default function ProfilePage({ user }) {
 
   const owner = user || authData.user;
   const [displayUser, setDisplayUser] = useState(owner);
-  const isOwner = authData.user === displayUser;
+  const [popup, setPopup] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  const [popup, setPopup] = useState(null); // popup state
+  const isOwner = authData.user === displayUser;
 
   useEffect(() => {
     if (user) setDisplayUser(user);
     else if (authData?.user) setDisplayUser(authData.user);
   }, [user, authData?.user]);
 
-  const PROFILE_URL = authData?.user?.profilePicture || sabAvatar;
+  const PROFILE_URL = displayUser?.profilePicture || sabAvatar;
   const files = displayUser?.files || [];
 
   const roleColors = {
     admin: "bg-red-200/20 text-red-300 border-red-400/40",
     user: "bg-blue-200/20 text-blue-300 border-blue-400/40",
-    moderator: "bg-purple-200/20 text-purple-300 border-purple-400/40"
+    moderator: "bg-purple-200/20 text-purple-300 border-purple-400/40",
   };
 
   const verificationTag = displayUser?.isAdminVerified
@@ -36,16 +37,17 @@ export default function ProfilePage({ user }) {
 
   const verificationText = displayUser?.isAdminVerified ? "Validated" : "Pending Validation";
 
-  // Auto-dismiss popup
-  useEffect(() => {
-    if (!popup) return;
-    const timer = setTimeout(() => setPopup(null), 3000);
-    return () => clearTimeout(timer);
-  }, [popup]);
+  // --- Handlers ---
 
-  // -------------------- HANDLERS --------------------
+  const handlePopup = (type, message, duration = 3000) => {
+    setPopup({ type, message });
+    setTimeout(() => setPopup(null), duration);
+  };
+
   const handleUpload = async (file) => {
     try {
+      setIsUploading(true);
+
       const uploadData = new FormData();
       uploadData.append("file", file);
       uploadData.append("folder", "uploads");
@@ -59,28 +61,32 @@ export default function ProfilePage({ user }) {
       const data = await response.json();
 
       if (response.status === 413) {
-        setPopup({ type: "error", message: data.message || "File is too large" });
+        handlePopup("error", data.message || "File is too large");
         return;
       }
 
       if (!response.ok) {
-        setPopup({ type: "error", message: data.message || "Upload failed" });
+        handlePopup("error", data.message || "Upload failed");
         return;
       }
 
       if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
       else setDisplayUser(data.user);
 
-      setPopup({ type: "success", message: "File uploaded successfully ✅" });
+      handlePopup("success", "File uploaded successfully ✅");
 
     } catch (err) {
       console.error(err);
-      setPopup({ type: "error", message: "Network error. Please try again." });
+      handlePopup("error", "Network error. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleReplace = async (file, newFile) => {
     try {
+      setIsUploading(true);
+
       const uploadData = new FormData();
       uploadData.append("file", newFile);
       uploadData.append("folder", "uploads");
@@ -94,28 +100,32 @@ export default function ProfilePage({ user }) {
       const data = await response.json();
 
       if (response.status === 413) {
-        setPopup({ type: "error", message: data.message || "File is too large" });
+        handlePopup("error", data.message || "File is too large");
         return;
       }
 
       if (!response.ok) {
-        setPopup({ type: "error", message: data.message || "Replace failed" });
+        handlePopup("error", data.message || "Replace failed");
         return;
       }
 
       if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
       else setDisplayUser(data.user);
 
-      setPopup({ type: "success", message: "File replaced successfully ✅" });
+      handlePopup("success", "File replaced successfully ✅");
 
     } catch (err) {
       console.error(err);
-      setPopup({ type: "error", message: "Network error. Please try again." });
+      handlePopup("error", "Network error. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleDelete = async (file) => {
     try {
+      setIsUploading(true);
+
       const response = await fetch(`${API_URL}/upload/${file._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${authData.token}` },
@@ -124,27 +134,49 @@ export default function ProfilePage({ user }) {
       const data = await response.json();
 
       if (!response.ok) {
-        setPopup({ type: "error", message: data.message || "Delete failed" });
+        handlePopup("error", data.message || "Delete failed");
         return;
       }
 
       if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
       else setDisplayUser(data.user);
 
-      setPopup({ type: "success", message: "File deleted successfully ✅" });
+      handlePopup("success", "File deleted successfully ✅");
 
     } catch (err) {
       console.error(err);
-      setPopup({ type: "error", message: "Network error. Please try again." });
+      handlePopup("error", "Network error. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  // -------------------- RENDER --------------------
+  // --- JSX ---
+
   return (
     <>
       <Navbar />
+      <div className="min-h-screen bg-gray-900 pb-16 relative">
 
-      <div className="min-h-screen bg-gray-900 pb-16">
+        {/* --- Spinner Overlay --- */}
+        {isUploading && (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
+            <div className="w-16 h-16 border-4 border-yellow-300 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+
+        {/* --- Centered Popup --- */}
+        {popup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <div className={`px-6 py-4 rounded-lg shadow-xl border text-sm font-medium pointer-events-auto
+              transform transition-all duration-300
+              ${popup.type === "error"
+                ? "bg-red-500/20 text-red-300 border-red-400/40"
+                : "bg-green-500/20 text-green-300 border-green-400/40"}`}>
+              {popup.message}
+            </div>
+          </div>
+        )}
 
         {/* --- GOLD COVER --- */}
         <div className="h-40 bg-yellow-400/80 shadow-md"></div>
@@ -174,15 +206,13 @@ export default function ProfilePage({ user }) {
               {/* Role Badge */}
               <span
                 className={`px-3 py-1 rounded-full border text-sm font-medium 
-                  ${roleColors[displayUser?.role] || "bg-yellow-300/20 text-yellow-300 border-yellow-400/40"}`}
-              >
+                  ${roleColors[displayUser?.role] || "bg-yellow-300/20 text-yellow-300 border-yellow-400/40"}`}>
                 {displayUser?.role.toUpperCase()}
               </span>
 
               {/* Verification Badge */}
               <span
-                className={`px-3 py-1 rounded-full border text-sm font-medium ${verificationTag}`}
-              >
+                className={`px-3 py-1 rounded-full border text-sm font-medium ${verificationTag}`}>
                 {verificationText}
               </span>
             </div>
@@ -212,7 +242,7 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* --- Files --- */}
+        {/* --- FILES --- */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl 
                         rounded-xl shadow-xl border border-yellow-400/20 p-10">
 
@@ -221,39 +251,26 @@ export default function ProfilePage({ user }) {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {files.map((file) => (
-              <FileCard
-                key={file._id}
-                file={file}
-                handleDelete={handleDelete}
-                handleReplace={handleReplace}
-              />
+            {files
+              .filter(file => file.folder === "uploads")
+              .map((file) => (
+                <FileCard
+                  key={file._id}
+                  file={file}
+                  handleDelete={handleDelete}
+                  handleReplace={handleReplace}
+                />
             ))}
+
             <AddFileCard onUpload={handleUpload} />
           </div>
         </div>
-
-        {/* --- POPUP --- */}
-        {popup && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div
-              className={`px-6 py-4 rounded-lg shadow-xl border text-sm font-medium pointer-events-auto
-                transform transition-all duration-300
-                ${
-                  popup.type === "error"
-                    ? "bg-red-500/20 text-red-300 border-red-400/40"
-                    : "bg-green-500/20 text-green-300 border-green-400/40"
-                }`}
-            >
-              {popup.message}
-            </div>
-          </div>
-        )}
       </div>
     </>
   );
 }
 
+// --- DetailBox Component ---
 function DetailBox({ label, value }) {
   return (
     <div className="p-4 rounded-lg bg-gray-900/40 border border-yellow-400/10">
