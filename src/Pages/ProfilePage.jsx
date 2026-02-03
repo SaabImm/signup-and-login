@@ -1,7 +1,7 @@
 import Title from '../Components/Title';
 import { useContext, useEffect, useState, useRef } from "react";
 import { UserContext } from "../Context/dataCont";
-import Navbar from '../Components/Navbar/Navbar';
+
 import sabAvatar from '../assets/SabrinaAvatar.jpg';
 import FileCard from '../Components/Cards/FileCrad';
 import AddFileCard from '../Components/Cards/AddFileCard';
@@ -155,7 +155,6 @@ export default function ProfilePage({ user }) {
 
   return (
     <>
-      <Navbar />
       <div className="min-h-screen bg-gray-900 pb-16 relative">
 
         {/* --- Spinner Overlay --- */}
@@ -252,7 +251,7 @@ export default function ProfilePage({ user }) {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
             {files
-              .filter(file => file.folder === "uploads")
+              .filter(file => file.folder !== "profile")
               .map((file) => (
                 <FileCard
                   key={file._id}

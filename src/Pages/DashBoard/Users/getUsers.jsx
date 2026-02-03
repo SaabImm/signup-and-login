@@ -52,7 +52,7 @@ export default function GetUsers() {
 
 
   return (
-    <div className="UsersPage min-h-screen ml-[200px] p-8 bg-gradient-to-br from-gray-900 to-gray-800 text-yellow-400 font-urbanist">
+    <div className="UsersPage min-h-screen ml-[80px] p-8 bg-gradient-to-br from-gray-900 to-gray-800 text-yellow-400 font-urbanist">
 
       {/* Title */}
       <Title title="Users Management" />

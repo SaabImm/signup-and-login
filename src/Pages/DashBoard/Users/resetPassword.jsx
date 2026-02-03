@@ -62,58 +62,84 @@ const id = authData?.user?._id || authData?.user?.id;
 }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center font-urbanist py-10">
+ return (
+  <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 font-urbanist px-4">
+    
+    <div className="w-full max-w-md bg-gray-800/80 backdrop-blur-xl border border-yellow-400/20 rounded-2xl shadow-2xl p-8">
+      
+      {/* Title */}
       <div className="mb-8 text-center">
-        <Title title="Change Password" />
-        <p className="text-gray-600 mt-2">Update your account password securely</p>
+        <Title title="Change Password" textColor="text-yellow-300" />
+        <p className="text-gray-400 mt-2 text-sm">
+          Update your account password securely
+        </p>
       </div>
 
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <input
-            type="password"
-            name="currentPassword"
-            placeholder="Current Password"
-            value={formData.currentPassword}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <input
-            type="password"
-            name="newPassword"
-            placeholder="New Password"
-            value={formData.newPassword}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
-          <input
-            type="password"
-            name="confirmNewPassword"
-            placeholder="Confirm New Password"
-            value={formData.confirmNewPassword}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+      <form className="space-y-5" onSubmit={handleSubmit}>
+        
+        <input
+          type="password"
+          name="currentPassword"
+          placeholder="Current password"
+          value={formData.currentPassword}
+          onChange={handleChange}
+          className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 
+                     text-gray-200 placeholder-gray-500
+                     focus:outline-none focus:ring-2 focus:ring-yellow-300"
+          required
+        />
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className={`w-full py-3 font-semibold rounded-md text-white transition-colors ${
-              isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"
+        <input
+          type="password"
+          name="newPassword"
+          placeholder="New password"
+          value={formData.newPassword}
+          onChange={handleChange}
+          className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 
+                     text-gray-200 placeholder-gray-500
+                     focus:outline-none focus:ring-2 focus:ring-yellow-300"
+          required
+        />
+
+        <input
+          type="password"
+          name="confirmNewPassword"
+          placeholder="Confirm new password"
+          value={formData.confirmNewPassword}
+          onChange={handleChange}
+          className="w-full p-3 rounded-md bg-gray-900 border border-gray-700 
+                     text-gray-200 placeholder-gray-500
+                     focus:outline-none focus:ring-2 focus:ring-yellow-300"
+          required
+        />
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className={`w-full py-3 rounded-md font-semibold transition
+            ${
+              isSubmitting
+                ? "bg-yellow-300/40 text-black cursor-not-allowed"
+                : "bg-yellow-300 text-black hover:bg-yellow-400"
             }`}
-          >
-            {isSubmitting ? "Updating..." : "Change Password"}
-          </button>
-        </form>
+        >
+          {isSubmitting ? "Updating..." : "Change Password"}
+        </button>
+      </form>
 
-        {message && (
-          <p className="mt-4 text-center text-red-500 font-medium">{message}</p>
-        )}
-      </div>
+      {message && (
+        <p
+          className={`mt-5 text-center text-sm font-medium ${
+            message.includes("success")
+              ? "text-green-400"
+              : "text-red-400"
+          }`}
+        >
+          {message}
+        </p>
+      )}
     </div>
-  );
+  </div>
+);
+
 }

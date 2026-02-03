@@ -17,7 +17,7 @@ export default function UpdateUser() {
   const authId = authData?.user?.id || authData?.user?._id;
   const isOwner = authId === id;
 
-  const UPDATE_URL = isOwner ? `${API_URL}/user/me` : `${API_URL}/user`;
+  const UPDATE_URL = isOwner ? `${API_URL}/user/me` : `${API_URL}/admin/user`;
 
   const [loading, setLoading] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -238,11 +238,10 @@ export default function UpdateUser() {
             )}
           </div>
 
-          <select
+          { isAdmin && !isOwner && <select
             name="role"
             value={formData.role}
             onChange={handleChange}
-            disabled={!isAdmin}
             className="w-full bg-transparent border-b-2 
                        border-yellow-300/30 focus:border-yellow-300 
                        text-yellow-200 outline-none py-2 transition"
@@ -250,11 +249,11 @@ export default function UpdateUser() {
             <option className="text-gray-900" value="user">User</option>
             <option className="text-gray-900" value="admin">Admin</option>
           </select>
-
+          }
           <input
             type="password"
             name="password"
-            placeholder="Mot de passe actuel"
+            placeholder="Tapez votre Mot de Passe"
             value={formData.password}
             onChange={handleChange}
             className="w-full bg-transparent border-b-2 

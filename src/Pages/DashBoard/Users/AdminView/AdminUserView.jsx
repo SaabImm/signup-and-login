@@ -55,7 +55,7 @@ export default function AdminUserView() {
     }
   };
 
-  const handleEdit = () => navigate(`/dash/update/${id}`);
+  const handleEdit = () => navigate(`/auth/update/${id}`);
 
   if (loading) return <div className="text-center text-yellow-300 py-10">Loading…</div>;
   if (!user) return <div className="text-center text-red-400 py-10">User not found.</div>;

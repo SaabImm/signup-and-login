@@ -39,8 +39,10 @@ export default function AdminDashboard() {
   ];
 
   return (
-  <div className="ml-[220px] p-10 min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 font-urbanist">
-    <SectionTitle title="Bienvenue dans le tableau de bord Admin" />
+  <div className="ml-[50px] p-10 min-h-screen bg-gradient-to-br from-gray-800 to-gray-900 font-urbanist">
+    <div className="mb-12">
+      <SectionTitle title="Tableau de bord Admin" />
+      </div>
 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {cards.map((card, index) => (

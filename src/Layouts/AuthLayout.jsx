@@ -1,14 +1,13 @@
 import { Outlet } from "react-router-dom";
-import Navbar from "../Components/Navbar/Navbar";
+import Navbar from "../Components/Navbar/Navbar"; // normal top nav
 
 export default function AuthLayout() {
   return (
     <>
-      <Navbar />
+      <Navbar />  {/* top navigation */}
       <main className="min-h-screen">
-        <Outlet /> 
+        <Outlet /> {/* nested pages: profile, reset password, onboarding */}
       </main>
-      
     </>
   );
 }

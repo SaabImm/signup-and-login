@@ -77,92 +77,112 @@ export default function CreateUser() {
     }
   };
 
-  return (
-    <>
-      <div className="flex flex-col justify-center items-center min-h-screen ml-[200px] gap-10 font-urbanist border-l-4 py-10">
-        <div className="flex flex-col justify-center items-center">
-          <Title title="Créer un nouvel utilisateur" />
-        </div>
+return (
+  <div className="min-h-screen flex flex-col items-center justify-center font-urbanist py-10 bg-gray-100">
+    
+    {/* Title */}
+    <div className="mb-8 text-center">
+      <Title title="Créer un nouvel utilisateur" />
+      <p className="text-gray-600 mt-2">
+        Ajouter un nouvel utilisateur au système
+      </p>
+    </div>
 
-        <div className="w-full max-w-md bg-gradient-to-br from-gray-900 to-gray-800 text-yellow-400 rounded-2xl shadow-2xl p-8">
-          <h2 className="text-3xl font-bold text-center mb-8 tracking-wide">
-            Remplir le Formulaire
-          </h2>
+    {/* Card */}
+    <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+      <form className="space-y-4" onSubmit={handleSubmit}>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <input
-              onChange={handleChange}
-              type="text"
-              placeholder="Nom.."
-              name="name"
-              value={formData.name}
-              className="w-full p-3 bg-gray-900/60 text-white placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-            />
-            <input
-              onChange={handleChange}
-              type="text"
-              placeholder="Prénom.."
-              name="lastname"
-              value={formData.lastname}
-              className="w-full p-3 bg-gray-900/60 text-white placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-            />
-            <input
-              onChange={handleChange}
-              type="date"
-              name="dateOfBirth"
-              value={formData.dateOfBirth}
-              min="1900-01-01"
-              className="w-full p-3 bg-gray-900/60 text-white/50 placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-            />
-            <input
-              onChange={handleChange}
-              type="email"
-              name="email"
-              placeholder="E-mail.."
-              value={formData.email}
-              className="w-full p-3 bg-gray-900/60 text-white placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-            />
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full p-3 bg-gray-900/60 text-white border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-            <input
-              onChange={handleChange}
-              type="password"
-              name="password"
-              placeholder="Mot de passe.."
-              value={formData.password}
-              className="w-full p-3 bg-gray-900/60 text-white placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-            />
-            <input
-              onChange={handleChange}
-              type="password"
-              name="secondPassword"
-              placeholder="Confirmez votre mot de passe.."
-              value={formData.secondPassword}
-              className="w-full p-3 bg-gray-900/60 text-white placeholder-gray-400 border border-yellow-500/40 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-            />
+        <input
+          type="text"
+          name="name"
+          placeholder="Nom"
+          value={formData.name}
+          onChange={handleChange}
+          className="w-full p-3 border border-gray-300 rounded-md
+            focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        />
 
-            <button
-              type="submit"
-              className="w-full py-3 text-lg font-semibold text-yellow-400 border-2 border-yellow-400 rounded-md bg-transparent hover:bg-yellow-400 hover:text-blue-950 transition-all duration-300"
-            >
-              Envoyer
-            </button>
-          </form>
-        </div>
+        <input
+          type="text"
+          name="lastname"
+          placeholder="Prénom"
+          value={formData.lastname}
+          onChange={handleChange}
+          className="w-full p-3 border border-gray-300 rounded-md
+            focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        />
 
-        {message && (
-          <div className={`text-center mt-4 font-medium ${isError ? "text-red-500" : "text-green-400"}`}>
-            {message}
-          </div>
-        )}
-      </div>
-    </>
-  );
+        <input
+          type="date"
+          name="dateOfBirth"
+          value={formData.dateOfBirth}
+          onChange={handleChange}
+          min="1900-01-01"
+          className="w-full p-3 border border-gray-300 rounded-md
+            focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        />
+
+        <input
+          type="email"
+          name="email"
+          placeholder="E-mail"
+          value={formData.email}
+          onChange={handleChange}
+          className="w-full p-3 border border-gray-300 rounded-md
+            focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        />
+
+        <select
+          name="role"
+          value={formData.role}
+          onChange={handleChange}
+          className="w-full p-3 border border-gray-300 rounded-md bg-white
+            focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        >
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Mot de passe"
+          value={formData.password}
+          onChange={handleChange}
+          className="w-full p-3 border border-gray-300 rounded-md
+            focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        />
+
+        <input
+          type="password"
+          name="secondPassword"
+          placeholder="Confirmer le mot de passe"
+          value={formData.secondPassword}
+          onChange={handleChange}
+          className="w-full p-3 border border-gray-300 rounded-md
+            focus:outline-none focus:ring-2 focus:ring-yellow-400"
+        />
+
+        <button
+          type="submit"
+          className="w-full py-3 font-semibold rounded-md text-gray-900
+            bg-yellow-400 hover:bg-yellow-500 transition-colors"
+        >
+          Créer l’utilisateur
+        </button>
+      </form>
+
+      {message && (
+        <p
+          className={`mt-4 text-center font-medium ${
+            isError ? "text-red-500" : "text-green-600"
+          }`}
+        >
+          {message}
+        </p>
+      )}
+    </div>
+  </div>
+);
+
 }

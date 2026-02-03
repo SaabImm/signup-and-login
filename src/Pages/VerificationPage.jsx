@@ -24,7 +24,7 @@ export default function VerifyPage() {
           setMessage("🎉 Email verified successfully!");
           if (mode !== "email-change") {
             // Default: redirect (e.g., for signup)
-            setTimeout(() => navigate("/profile"), 1500);
+            setTimeout(() => navigate("/onboarding"), 1500);
           }
         } else {
           setMessage(data.message || "❌ Verification failed. Please try again.");

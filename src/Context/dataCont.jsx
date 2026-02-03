@@ -5,35 +5,52 @@ export const UserContext = createContext();
 export default function UserProvider({ children }) {
   const [authData, setAuthData] = useState({
     user: null,
-    token: null
+    token: null,
   });
 
-  // ✅ Load authData from localStorage on refresh
+  const [loading, setLoading] = useState(true);
+
+  // 🔹 Hydrate auth state ONCE on app load
   useEffect(() => {
-    const stored = localStorage.getItem("authData");
-    if (stored) {
-      setAuthData(JSON.parse(stored));
+    const storedAuth = localStorage.getItem("authData");
+
+    if (storedAuth) {
+      try {
+        setAuthData(JSON.parse(storedAuth));
+      } catch (err) {
+        console.error("Invalid authData in storage");
+        localStorage.removeItem("authData");
+      }
     }
+
+    setLoading(false);
   }, []);
 
-  // ✅ Save authData to localStorage whenever it changes
+  // 🔹 Persist auth changes AFTER hydration
   useEffect(() => {
-    if (authData.user && authData.token) {
+    if (loading) return;
+
+    if (authData?.user && authData?.token) {
       localStorage.setItem("authData", JSON.stringify(authData));
     } else {
       localStorage.removeItem("authData");
     }
-  }, [authData]);
+  }, [authData, loading]);
 
-  // ✅ Logout
   const logout = () => {
     setAuthData({ user: null, token: null });
     localStorage.removeItem("authData");
-    
   };
 
   return (
-    <UserContext.Provider value={{ authData, setAuthData, logout }}>
+    <UserContext.Provider
+      value={{
+        authData,
+        setAuthData,
+        logout,
+        loading,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

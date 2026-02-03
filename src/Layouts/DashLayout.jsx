@@ -1,14 +1,14 @@
+// Layouts/AdminLayout.jsx
 import { Outlet } from "react-router-dom";
-import SideBar from "../Components/Navbar/HorizentalNav"
+import SideBar from "../Components/Navbar/HorizentalNav";
 
-export default function AuthLayout() {
+export default function DashLayout() {
   return (
     <>
-      <SideBar/>
-      <main className="min-h-screen">
-        <Outlet /> 
+      <SideBar /> {/* admin sidebar */}
+      <main className="ml-[220px] min-h-screen">
+        <Outlet />
       </main>
-      
     </>
   );
 }

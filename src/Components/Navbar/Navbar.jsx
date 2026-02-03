@@ -10,10 +10,12 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef();
-  const id = authData.user?._id || authData.user?.id;
-      const PROFILE_URL =
-      authData?.user?.profilePicture ||
-      sabAvatar;
+
+  const user = authData.user;
+  const id = user?._id || user?.id;
+  const role = user?.role;
+  const PROFILE_URL = user?.profilePicture || sabAvatar;
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -32,19 +34,23 @@ export default function Navbar() {
 
           {/* Logo / Brand */}
           <div className="flex-shrink-0">
-            <Link to="/" className="text-2xl font-bold hover:text-yellow-400 transition-colors">
+            <Link to="#" className="text-2xl font-bold hover:text-yellow-400 transition-colors">
               CNOA FORUM
             </Link>
           </div>
 
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-6">
-            <Link to="/dash" className="hover:text-yellow-400 transition-colors">
-              Dashboard
-            </Link>
-            <Link to="/about" className="hover:text-yellow-400 transition-colors">
-              About
-            </Link>
+            {role === "admin" && (
+              <Link to="/dash" className="hover:text-yellow-400 transition-colors">
+                Dashboard
+              </Link>
+            )}
+
+              <Link to="/auth/profile" className="hover:text-yellow-400 transition-colors">
+                Profile
+              </Link>
+            
           </div>
 
           {/* Profile Dropdown */}
@@ -53,7 +59,7 @@ export default function Navbar() {
               onClick={() => setDropdownOpen(!dropdownOpen)}
               className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-gray-800 transition-all"
             >
-              <span className="font-semibold">{authData.user?.name}</span>
+              <span className="font-semibold">{user?.name}</span>
               <img
                 src={PROFILE_URL}
                 alt="Avatar"
@@ -63,18 +69,43 @@ export default function Navbar() {
 
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-gray-900 text-yellow-300 shadow-lg rounded-lg py-2 z-50 border border-yellow-300">
-                <button
-                  onClick={() => { navigate(`/dash/update/${id}`); setDropdownOpen(false); }}
-                  className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
-                >
-                  Edit Profile
-                </button>
-                <button
-                  onClick={() => { navigate("/dash/resetPsw"); setDropdownOpen(false); }}
-                  className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
-                >
-                  Edit Password
-                </button>
+                
+                {/* Admin profile links */}
+                {role === "admin" && (
+                  <>
+                    <button
+                      onClick={() => { navigate(`/auth/update/${id}`); setDropdownOpen(false); }}
+                      className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
+                    >
+                      Edit Profile
+                    </button>
+                    <button
+                      onClick={() => { navigate("/auth/resetPsw"); setDropdownOpen(false); }}
+                      className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
+                    >
+                      Edit Password
+                    </button>
+                  </>
+                )}
+
+                {/* User profile links */}
+                {role === "user" && (
+                  <>
+                    <button
+                      onClick={() => { navigate(`/auth/update/${id}`); setDropdownOpen(false); }}
+                      className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
+                    >
+                      Edit Profile
+                    </button>
+                    <button
+                      onClick={() => { navigate("/auth/resetPsw"); setDropdownOpen(false); }}
+                      className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
+                    >
+                      Edit Password
+                    </button>
+                  </>
+                )}
+
                 <div className="border-t border-yellow-300 my-1"></div>
                 <button
                   onClick={() => { handleLogout(); setDropdownOpen(false); }}

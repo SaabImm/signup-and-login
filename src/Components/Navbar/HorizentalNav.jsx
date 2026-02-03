@@ -11,7 +11,7 @@ export default function SideBar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 bottom-0 w-[220px] bg-gray-900 text-gray-100 flex flex-col justify-between py-10 px-4 font-urbanist shadow-lg">
+    <nav className="fixed  top-0 left-0 bottom-0 w-[300px] bg-gray-900 text-gray-100 flex flex-col justify-between py-10 px-4 font-urbanist shadow-lg">
       
       {/* Logo / Title */}
       <div className="mb-10 text-center">
@@ -35,7 +35,7 @@ export default function SideBar() {
         <div className="group relative">
           <button className="w-full text-left px-4 py-3 rounded-lg font-medium transition-colors hover:bg-yellow-400 hover:text-gray-900 flex justify-between items-center">
             Utilisateurs
-            <span className="ml-2 transform group-hover:rotate-90 transition-transform">▶</span>
+           <span className="ml-2 text-[30px] opacity-50">›</span>
           </button>
 
           <div className="absolute left-0 top-full mt-1 w-full bg-gray-800 text-gray-100 rounded-lg shadow-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 transition-all duration-300 z-20">
@@ -47,7 +47,7 @@ export default function SideBar() {
                   : "hover:bg-yellow-400 hover:text-gray-900"
               }`}
             >
-              All Users
+              Tous les utilisateurs
             </button>
             <button
               onClick={() => navigate("/dash/create")}
@@ -57,35 +57,15 @@ export default function SideBar() {
                   : "hover:bg-yellow-400 hover:text-gray-900"
               }`}
             >
-              Create User
+              Créer Utilisateur
             </button>
           </div>
         </div>
 
-        <button
-          onClick={() => navigate("/dash/produits")}
-          className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
-            isActive("/dash/produits") 
-              ? "bg-yellow-300 text-gray-900 shadow-lg" 
-              : "hover:bg-yellow-400 hover:text-gray-900"
-          }`}
-        >
-          Produits
-        </button>
+
 
         <button
-          onClick={() => navigate("/dash/fichiers")}
-          className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
-            isActive("/dash/fichiers") 
-              ? "bg-yellow-300 text-gray-900 shadow-lg" 
-              : "hover:bg-yellow-400 hover:text-gray-900"
-          }`}
-        >
-          Fichiers
-        </button>
-
-        <button
-          onClick={() => navigate("/profile")}
+          onClick={() => navigate("/auth/profile")}
           className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
             isActive("/profile") 
               ? "bg-yellow-300 text-gray-900 shadow-lg" 

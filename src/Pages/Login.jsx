@@ -38,7 +38,7 @@ const LoginForm = () => {
 
       if (response.ok) {
         setAuthData({ user: data.user, token: data.token });
-        const roleRedirects = { admin: "/dash", user: "/profile" };
+        const roleRedirects = { admin: "/dash", user: "/auth/profile" };
         navigate(roleRedirects[data.user.role] || "/");
       } else {
         setMessage(data.message);
