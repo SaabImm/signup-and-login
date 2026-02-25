@@ -47,7 +47,7 @@ export default function App() {
           <ProtectedRoute> <UpdateUser /> </ProtectedRoute>} />
         <Route path="onboarding" element={
           <ProtectedRoute><OnboardingPage /></ProtectedRoute>
-        } />
+        } /> 
       </Route>
 
       {/* DASHBOARD / ADMIN LAYOUT */}

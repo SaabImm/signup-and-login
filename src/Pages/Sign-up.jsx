@@ -50,6 +50,7 @@ export default function FormulaireCNOA() {
           lastname: formData.lastname,
           email: formData.email,
           password: formData.password,
+           dateOfBirth: formData.dateOfBirth,
         }),
       });
 

@@ -1,6 +1,5 @@
 import { useContext, useState, useEffect } from "react";
 import { UserContext } from "../Context/dataCont";
-import Navbar from "../Components/Navbar/Navbar";
 import Title from "../Components/Title";
 import FileCard from "../Components/Cards/FileCrad";
 import AddFileCard from "../Components/Cards/AddFileCard";
@@ -11,7 +10,6 @@ export default function OnboardingPage() {
   const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
 
-  /* -------------------- LOCAL DISPLAY USER (🔥 FIX) -------------------- */
 
   const [displayUser, setDisplayUser] = useState(authData.user);
 
@@ -31,7 +29,6 @@ export default function OnboardingPage() {
     setTimeout(() => setPopup(null), 3000);
   };
 
-  /* -------------------- FILE STATE (🔥 FIX) -------------------- */
 
   const onboardingFiles =
     (displayUser?.files || []).filter(f => f.folder === "onboarding");
@@ -156,14 +153,13 @@ export default function OnboardingPage() {
       handlePopup("error", "Please upload 1 PDF and 1 image");
       return;
     }
-    navigate("/profile");
+    navigate("/auth/profile");
   };
 
   /* -------------------- RENDER -------------------- */
 
   return (
     <>
-      <Navbar />
 
       <div className="min-h-screen bg-gray-900 flex flex-col items-center pt-24 pb-16">
 

@@ -16,7 +16,6 @@ export default function Navbar() {
   const role = user?.role;
   const PROFILE_URL = user?.profilePicture || sabAvatar;
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -41,16 +40,15 @@ export default function Navbar() {
 
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-6">
-            {role === "admin" && (
+            {/* Dashboard visible to admin and super_admin */}
+            {(role === "admin" || role === "super_admin") && (
               <Link to="/dash" className="hover:text-yellow-400 transition-colors">
                 Dashboard
               </Link>
             )}
-
-              <Link to="/auth/profile" className="hover:text-yellow-400 transition-colors">
-                Profile
-              </Link>
-            
+            <Link to="/auth/profile" className="hover:text-yellow-400 transition-colors">
+              Profile
+            </Link>
           </div>
 
           {/* Profile Dropdown */}
@@ -69,42 +67,19 @@ export default function Navbar() {
 
             {dropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-gray-900 text-yellow-300 shadow-lg rounded-lg py-2 z-50 border border-yellow-300">
-                
-                {/* Admin profile links */}
-                {role === "admin" && (
-                  <>
-                    <button
-                      onClick={() => { navigate(`/auth/update/${id}`); setDropdownOpen(false); }}
-                      className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
-                    >
-                      Edit Profile
-                    </button>
-                    <button
-                      onClick={() => { navigate("/auth/resetPsw"); setDropdownOpen(false); }}
-                      className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
-                    >
-                      Edit Password
-                    </button>
-                  </>
-                )}
-
-                {/* User profile links */}
-                {role === "user" && (
-                  <>
-                    <button
-                      onClick={() => { navigate(`/auth/update/${id}`); setDropdownOpen(false); }}
-                      className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
-                    >
-                      Edit Profile
-                    </button>
-                    <button
-                      onClick={() => { navigate("/auth/resetPsw"); setDropdownOpen(false); }}
-                      className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
-                    >
-                      Edit Password
-                    </button>
-                  </>
-                )}
+                {/* Common profile options for all authenticated users */}
+                <button
+                  onClick={() => { navigate(`/auth/update/${id}`); setDropdownOpen(false); }}
+                  className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
+                >
+                  Edit Profile
+                </button>
+                <button
+                  onClick={() => { navigate("/auth/resetPsw"); setDropdownOpen(false); }}
+                  className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
+                >
+                  Edit Password
+                </button>
 
                 <div className="border-t border-yellow-300 my-1"></div>
                 <button
@@ -117,9 +92,9 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Placeholder */}
           <div className="md:hidden flex items-center">
-            {/* Optional Hamburger menu */}
+            {/* You can add a hamburger menu here if needed */}
           </div>
 
         </div>

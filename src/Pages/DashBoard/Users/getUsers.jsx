@@ -20,7 +20,7 @@ export default function GetUsers() {
       try {
         
         const response = await fetchWithRefresh(
-          `${API_URL}/user`,
+          `${API_URL}/admin/allUsers`,
           { method: "GET" },
           authData.token,
           setAuthData

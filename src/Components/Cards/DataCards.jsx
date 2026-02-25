@@ -44,7 +44,7 @@ export default function DataCards({ userItem }) {
         <div className="absolute inset-0 flex flex-col justify-center items-center gap-4 bg-black/50 rounded-xl transition-opacity">
           <Link to={`/dash/adminUser/${userItem._id}`} className="w-36">
             <button className="w-full py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-semibold shadow-lg shadow-black/30">
-              Edit
+              View
             </button>
           </Link>
           <Link to={`/dash/delete/${userItem._id}`} className="w-36">

@@ -38,8 +38,14 @@ const LoginForm = () => {
 
       if (response.ok) {
         setAuthData({ user: data.user, token: data.token });
-        const roleRedirects = { admin: "/dash", user: "/auth/profile" };
-        navigate(roleRedirects[data.user.role] || "/");
+        
+if (data.user.role === 'admin' || data.user.role === 'super_admin') {
+  navigate('/dash');
+} else if (data.user.role === 'user') {
+  navigate('/auth/profile');
+} else {
+  navigate('/');
+}
       } else {
         setMessage(data.message);
       }

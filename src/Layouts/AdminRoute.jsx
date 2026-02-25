@@ -11,7 +11,7 @@ export default function AdminRoute({ children }) {
     return <Navigate to="/" replace />;
   }
 
-  if (authData.user?.role !== "admin") {
+  if (authData.user?.role !== "admin" && authData.user?.role !== "super_admin") {
     return <Navigate to="/auth/profile" replace />;
   }
 

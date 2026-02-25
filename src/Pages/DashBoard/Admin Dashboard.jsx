@@ -15,7 +15,7 @@ export default function AdminDashboard() {
 
     const getElements = async () => {
       try {
-        const response = await fetch(`${API_URL}/user`, {
+        const response = await fetch(`${API_URL}/admin/allUsers`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -34,8 +34,7 @@ export default function AdminDashboard() {
 
   const cards = [
     { title: "Utilisateurs", count: data?.users?.length || 0, onClick: () => navigate("/dash/allUsers") },
-    { title: "Produits", count: 0, onClick: () => navigate("/dash/produits") },
-    { title: "Fichiers", count: 0, onClick: () => navigate("/dash/fichiers") },
+    { title: "Documents", count: 0, onClick: () => navigate("/dash/fichiers") },
   ];
 
   return (

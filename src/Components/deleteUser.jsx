@@ -38,7 +38,7 @@ export default function DeleteUser() {
   };
 
   return (
-    <div className="ml-[200px] min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-yellow-300 font-urbanist p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-yellow-300 font-urbanist p-8">
 
       <div className="
         bg-gray-900/50 backdrop-blur-xl 

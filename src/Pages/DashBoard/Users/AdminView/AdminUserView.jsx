@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ProfilePage from "../../../ProfilePage";
 const API_URL = import.meta.env.VITE_API_URL;
-
+import { UserContext } from "../../../../Context/dataCont";
 export default function AdminUserView() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -10,17 +10,24 @@ export default function AdminUserView() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [validating, setValidating] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
-
+  const [showPopup, setShowPopup] = useState(false)
+  const { authData, setAuthData } = useContext(UserContext);
   // Fetch user data
   useEffect(() => {
     const getUser = async () => {
       try {
         const res = await fetch(`${API_URL}/user/${id}`, {
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", 
+            Authorization: `Bearer ${authData.token}`,
+          },
+
+          method: "GET"
         });
         const data = await res.json();
+        
         setUser(data.user);
+        setMessage(data.message)
+        console.log("message", message)
       } catch (err) {
         console.log(err);
       } finally {
