@@ -1,4 +1,4 @@
-import { React, useState, useContext, useEffect } from "react";
+import { React, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../Context/dataCont";
 import SectionTitle from "../Components/Title";
@@ -7,7 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export default function FormulaireCNOA() {
   const [message, setMessage] = useState("");
-  const { setAuthData, authData } = useContext(UserContext);
+  const { setAuthData } = useContext(UserContext);
   const navigate = useNavigate();
 
   const today = new Date();
@@ -20,8 +20,9 @@ export default function FormulaireCNOA() {
     name: "",
     lastname: "",
     email: "",
-    role: "user",
     dateOfBirth: "",
+    sexe: "",          // Nouveau champ
+    registrationNumber: "", // Nouveau champ
     password: "",
     secondPassword: "",
   });
@@ -50,7 +51,9 @@ export default function FormulaireCNOA() {
           lastname: formData.lastname,
           email: formData.email,
           password: formData.password,
-           dateOfBirth: formData.dateOfBirth,
+          dateOfBirth: formData.dateOfBirth,
+          sexe: formData.sexe,
+          registrationNumber: formData.registrationNumber,
         }),
       });
 
@@ -101,6 +104,28 @@ export default function FormulaireCNOA() {
             max={maxDate}
             className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
           />
+
+          {/* Nouveau champ : Sexe */}
+          <select
+            onChange={handleChange}
+            name="sexe"
+            value={formData.sexe}
+            className="w-full p-3 bg-gray-800 text-yellow-300 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+          >
+            <option value="">Sélectionnez votre sexe</option>
+            <option value="homme">Homme</option>
+            <option value="femme">Femme</option>
+          </select>
+
+          {/* Nouveau champ : Numéro d'inscription */}
+          <input
+            onChange={handleChange}
+            type="text"
+            name="registrationNumber"
+            placeholder="Numéro d'inscription"
+            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+          />
+
           <input
             onChange={handleChange}
             type="email"

@@ -55,7 +55,8 @@ export default function App() {
         <AdminRoute><DashLayout /></AdminRoute>
       }>
         <Route index element={<AdminDashboard />} />
-        <Route path="allUsers" element={<GetUsers />} />
+        <Route path="allUsers" element={<GetUsers mode="users" />} />
+         <Route path="allMembers" element={<GetUsers mode="membres" />} />
         <Route path="create" element={<CreateUser />} />
         <Route path="delete/:id" element={<DeleteUser />} />
         <Route path="adminUser/:id" element={<AdminUserView />} />

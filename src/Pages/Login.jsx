@@ -6,17 +6,47 @@ import SectionTitle from "../Components/Title";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const LoginForm = () => {
-  const { authData, setAuthData, logout } = useContext(UserContext);
+  const { authData, setAuthData } = useContext(UserContext);
   const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [lockTime, setLockTime] = useState(null); // temps restant en secondes
+  const LOCK_STORAGE_KEY = "loginLockUntil";
 
+  // Initialiser le timer à partir du localStorage
   useEffect(() => {
-    logout();
+    const storedLockUntil = localStorage.getItem(LOCK_STORAGE_KEY);
+    if (storedLockUntil) {
+      const lockUntil = parseInt(storedLockUntil, 10);
+      const now = Date.now();
+      if (lockUntil > now) {
+        const remaining = Math.ceil((lockUntil - now) / 1000);
+        setLockTime(remaining);
+      } else {
+        localStorage.removeItem(LOCK_STORAGE_KEY);
+      }
+    }
   }, []);
+
+  // Gestion du compte à rebours
+  useEffect(() => {
+    let interval;
+    if (lockTime > 0) {
+      interval = setInterval(() => {
+        setLockTime((prev) => {
+          if (prev <= 1) {
+            localStorage.removeItem(LOCK_STORAGE_KEY);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [lockTime]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -27,6 +57,8 @@ const LoginForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setFormData((prev) => ({ ...prev, password: "" }));
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
@@ -38,21 +70,35 @@ const LoginForm = () => {
 
       if (response.ok) {
         setAuthData({ user: data.user, token: data.token });
+        // Redirection selon le rôle
+        if (data.user.role === 'admin' || data.user.role === 'super_admin') {
+          navigate('/dash');
+        } else if (data.user.role === 'user') {
+          navigate('/auth/profile');
+        } else {
+          navigate('/');
+        }
+      } else if (response.status === 429) {
+        // Le serveur renvoie le temps restant (en secondes)
+        const remaining = data.remainingTime || 60; // fallback
+        const lockUntil = Date.now() + remaining * 1000;
+        localStorage.setItem(LOCK_STORAGE_KEY, lockUntil);
+        setLockTime(remaining);
+        setMessage(data.message || "Trop de tentatives. Veuillez patienter.");
         
-if (data.user.role === 'admin' || data.user.role === 'super_admin') {
-  navigate('/dash');
-} else if (data.user.role === 'user') {
-  navigate('/auth/profile');
-} else {
-  navigate('/');
-}
       } else {
-        setMessage(data.message);
+        setMessage(data.message || "Erreur de connexion.");
       }
     } catch (err) {
       console.error("Network error:", err);
-      setMessage("⚠️ Network error. Please try again.");
+      setMessage("⚠️ Erreur réseau. Veuillez réessayer.");
     }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
   return (
@@ -72,22 +118,27 @@ if (data.user.role === 'admin' || data.user.role === 'super_admin') {
             type="email"
             name="email"
             placeholder="E-mail"
+            value={formData.email}
             onChange={handleChange}
-            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            disabled={lockTime > 0}
+            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <input
             type="password"
             name="password"
             placeholder="Password"
+            value={formData.password}
             onChange={handleChange}
-            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            disabled={lockTime > 0}
+            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           />
 
           <button
             type="submit"
-            className="w-full py-3 text-lg font-semibold text-yellow-300 border-2 border-yellow-300 rounded-md bg-transparent hover:bg-yellow-300 hover:text-gray-900 transition-all duration-300"
+            disabled={lockTime > 0}
+            className="w-full py-3 text-lg font-semibold text-yellow-300 border-2 border-yellow-300 rounded-md bg-transparent hover:bg-yellow-300 hover:text-gray-900 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Log In
+            {lockTime > 0 ? `Bloqué (${formatTime(lockTime)})` : "Log In"}
           </button>
         </form>
 

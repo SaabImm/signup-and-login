@@ -34,7 +34,7 @@ export default function AdminDashboard() {
 
   const cards = [
     { title: "Utilisateurs", count: data?.users?.length || 0, onClick: () => navigate("/dash/allUsers") },
-    { title: "Documents", count: 0, onClick: () => navigate("/dash/fichiers") },
+    { title: "Membres", count: 0, onClick: () => navigate("/dash/allMembers") },
   ];
 
   return (

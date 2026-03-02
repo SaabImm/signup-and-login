@@ -21,7 +21,7 @@ export default function CreateUser() {
     password: "",
     secondPassword: "",
   });
-
+  
   useEffect(() => {
     const fetchCreatableFields = async () => {
       try {
@@ -40,20 +40,21 @@ export default function CreateUser() {
         });
         
         const canCreateData = await canCreateRes.json();
-        setCanCreate(canCreateData.canPerform);
         
+        setCanCreate(canCreateData.canPerform);
+
         if (!canCreateData.canPerform) {
           setLoading(false);
           return;
         }
-        
+
         // 2. Fetch creatable fields using the correct route
         const fieldsRes = await fetch(`${API_URL}/permissions/user/${viewerId}/crFields`, {
           headers: { Authorization: `Bearer ${authData.token}` }
         });
         
         const fieldsData = await fieldsRes.json();
-        console.log("Creatable fields response:", fieldsData);
+
         
         // The API returns an object with { fields: [], configs: {} }
         setCreatableFields(fieldsData.fields || []);
@@ -80,7 +81,6 @@ export default function CreateUser() {
       fetchCreatableFields();
     }
   }, [authData, viewerId]);
-
   const handleChange = (e) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
@@ -135,7 +135,7 @@ export default function CreateUser() {
       }, authData.token, setAuthData);
 
       const data = await response.json();
-
+      
       if (response.ok) {
         setIsError(false);
         setMessage("✅ Utilisateur créé avec succès!");
@@ -162,7 +162,6 @@ export default function CreateUser() {
 const renderField = (fieldName) => {
   const config = fieldConfigs[fieldName] || {};
   const value = formData[fieldName] || "";
-  
   // Special handling for Algerian fields
   if (fieldName === 'wilaya') {
     return (
@@ -217,7 +216,6 @@ const renderField = (fieldName) => {
   }
   
   // For all other fields, use the config type
-  console.log(`Rendering ${fieldName}:`, config);
   if (config.type === 'select') {
     return (
       <div key={fieldName} className="space-y-1">

@@ -15,7 +15,7 @@ export default function SideBar() {
       
       {/* Logo / Title */}
       <div className="mb-10 text-center">
-        <SectionTitle title="MbsDash" />
+        <SectionTitle title="GestOrg" />
       </div>
 
       {/* Main Navigation */}
@@ -62,7 +62,16 @@ export default function SideBar() {
           </div>
         </div>
 
-
+          <button
+            onClick={() => navigate("/dash/allMembers")}
+            className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
+              isActive("/profile") 
+                ? "bg-yellow-300 text-gray-900 shadow-lg" 
+                : "hover:bg-yellow-400 hover:text-gray-900"
+            }`}
+          >
+            Membres
+        </button>
 
         <button
           onClick={() => navigate("/auth/profile")}
