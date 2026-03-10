@@ -27,7 +27,6 @@ export default function AdminUserView() {
         
         setUser(data.user);
         setMessage(data.message)
-        console.log("message", message)
       } catch (err) {
         console.log(err);
       } finally {

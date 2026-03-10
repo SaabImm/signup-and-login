@@ -18,8 +18,13 @@ import AdminDashboard from './Pages/DashBoard/Admin Dashboard';
 import GetUsers from './Pages/DashBoard/Users/getUsers';
 import CreateUser from './Pages/DashBoard/Users/createUser';
 import UpdateUser from './Pages/DashBoard/Users/updateUser';
-import DeleteUser from './Components/deleteUser';
+import EditCotisation from "./Pages/DashBoard/Cotisations/EditCotisation";
+import DeleteItem from './Components/deleteItem';
 import AdminUserView from './Pages/DashBoard/Users/AdminView/AdminUserView';
+import GetCotisations from "./Pages/DashBoard/Cotisations/getCotisations";
+import FeeStats from "./Pages/DashBoard/Stats/FeeStats"
+import UserStats from "./Pages/DashBoard/Stats/UserStats";
+import CreateBulkCotisation from "./Pages/DashBoard/Cotisations/CreateBulkCotisations";
 
 export default function App() {
   return (
@@ -45,6 +50,8 @@ export default function App() {
         } />
         <Route path="update/:id" element={
           <ProtectedRoute> <UpdateUser /> </ProtectedRoute>} />
+        <Route path="edit/fee/:id" element={
+          <ProtectedRoute> <EditCotisation /> </ProtectedRoute>} />
         <Route path="onboarding" element={
           <ProtectedRoute><OnboardingPage /></ProtectedRoute>
         } /> 
@@ -56,10 +63,17 @@ export default function App() {
       }>
         <Route index element={<AdminDashboard />} />
         <Route path="allUsers" element={<GetUsers mode="users" />} />
-         <Route path="allMembers" element={<GetUsers mode="membres" />} />
+        <Route path="allMembers" element={<GetUsers mode="membres" />} />
+        <Route path="allCotisations" element={<GetCotisations/>} />
         <Route path="create" element={<CreateUser />} />
-        <Route path="delete/:id" element={<DeleteUser />} />
+        <Route path="ajouterCotisation" element={<CreateBulkCotisation />} />
+
+        <Route path="delete/:id" element={<DeleteItem mode='user' />} />
+        <Route path="delete/fee/:id" element={<DeleteItem mode='cotisation' />} />
         <Route path="adminUser/:id" element={<AdminUserView />} />
+        <Route path="feeStats/" element={<FeeStats />} />
+        <Route path="userStats/" element={<UserStats />} />
+
       </Route>
 
     </Routes>

@@ -2,7 +2,6 @@ import { useState, useContext, useEffect } from "react";
 import { UserContext } from "../../../Context/dataCont";
 import Title from "../../../Components/Title";
 import { useParams } from "react-router-dom";
-import sabAvatar from "../../../assets/SabrinaAvatar.jpg";
 
 // Import your wilaya data
 import wilayasData from "../../../assets/data/wilayas.json"; // Adjust path as needed
@@ -36,12 +35,13 @@ export default function UpdateUser() {
         setUserData(userData.user);
         
         // 2. Fetch permissions for this user
-        const permRes = await fetch(`${API_URL}/permissions/user/${id}/fields`, {
+        const permRes = await fetch(`${API_URL}/permissions/user/${id}/fields?model=User`, {
           method : "GET",
           headers: { Authorization: `Bearer ${authData.token}` }
         });
         const permData = await permRes.json();
         setPermissions(permData);
+        console.log(permissions)
         
         // 3. Initialize form with user data (only fields that exist)
         const initialForm = {};

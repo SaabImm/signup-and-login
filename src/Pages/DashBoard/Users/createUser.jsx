@@ -49,7 +49,7 @@ export default function CreateUser() {
         }
 
         // 2. Fetch creatable fields using the correct route
-        const fieldsRes = await fetch(`${API_URL}/permissions/user/${viewerId}/crFields`, {
+        const fieldsRes = await fetch(`${API_URL}/permissions/user/${viewerId}/crFields?model=User`, {
           headers: { Authorization: `Bearer ${authData.token}` }
         });
         

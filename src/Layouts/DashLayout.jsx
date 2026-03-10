@@ -1,6 +1,6 @@
 // Layouts/AdminLayout.jsx
 import { Outlet } from "react-router-dom";
-import SideBar from "../Components/Navbar/HorizentalNav";
+import SideBar from "../Components/Navbar/SideBar";
 
 export default function DashLayout() {
   return (

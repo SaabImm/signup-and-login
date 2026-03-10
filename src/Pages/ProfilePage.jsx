@@ -5,6 +5,8 @@ import { useParams } from "react-router-dom"; // Add this if not already
 
 import sabAvatar from '../assets/SabrinaAvatar.jpg';
 import FileCard from '../Components/Cards/FileCrad';
+import CotisationCard from '../Components/Cards/CotisationCard';
+
 import AddFileCard from '../Components/Cards/AddFileCard';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -15,13 +17,13 @@ export default function ProfilePage({ user }) {
   
   const [displayUser, setDisplayUser] = useState(user || authData.user);
   const [permissions, setPermissions] = useState(null);
+  const [perform, setPerform] = useState(null)
   const [loading, setLoading] = useState(true);
   const [popup, setPopup] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
   const targetUserId = user?._id || id || authData.user?._id;
   const isOwner = authData.user?._id === targetUserId;
-
   // Fetch user data and permissions
   useEffect(() => {
     const fetchData = async () => {
@@ -39,15 +41,27 @@ export default function ProfilePage({ user }) {
         }
         
         setDisplayUser(userData || authData.user);
+        console.log(displayUser)
         
         // Fetch permissions for this user view
-        const permRes = await fetch(`${API_URL}/permissions/user/${targetUserId}/vwFields`, {
+        const permRes = await fetch(`${API_URL}/permissions/user/${targetUserId}/vwFields?model=User`, {
           headers: { Authorization: `Bearer ${authData.token}` }
         });
         const permData = await permRes.json();
-        console.log(permData)
         setPermissions(permData);
+        console.log(permissions)
         
+        //fetch executable operations 
+          const opRes = await fetch(`${API_URL}/permissions/${targetUserId}/check-operation`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${authData.token}`,
+          "Content-Type": "application/json", },
+          body: JSON.stringify ({
+            operation : "create",
+            model: "File"
+          })});
+          const opData = await opRes.json()
+          setPerform(opData.canPerform)
       } catch (error) {
         console.error("Error fetching data:", error);
         handlePopup("error", "Erreur lors du chargement des données");
@@ -63,7 +77,8 @@ export default function ProfilePage({ user }) {
 
   const PROFILE_URL = displayUser?.profilePicture || sabAvatar;
   const files = displayUser?.files || [];
-
+  const fees = displayUser?.fees;
+  
   const roleColors = {
     admin: "bg-red-200/20 text-red-300 border-red-400/40",
     user: "bg-blue-200/20 text-blue-300 border-blue-400/40",
@@ -331,7 +346,27 @@ export default function ProfilePage({ user }) {
             ))}
 
             {/* Only show add file if user has permission to upload */}
-            {isOwner && <AddFileCard onUpload={handleUpload} />}
+            {perform && <AddFileCard onUpload={handleUpload} />}
+          </div>
+        </div>
+
+
+        {/* --- FEES --- */}
+        <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl 
+                        rounded-xl shadow-xl border border-yellow-400/20 p-10">
+          <div className="flex justify-between items-center mb-6">
+            <Title title="Cotisations" textColor="text-yellow-300" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            {fees && fees.length > 0 ? (
+              fees.map((fee) => (
+                <CotisationCard key={fee._id} cotisation={fee} />
+              ))
+            ) : (
+              <p className="text-gray-400 col-span-full text-center py-8">
+                Aucune cotisation trouvée pour ce membre.
+              </p>
+            )}
           </div>
         </div>
       </div>
