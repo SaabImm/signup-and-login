@@ -25,9 +25,9 @@ export default function DeleteItem({ mode }) { // mode = "user" ou "cotisation"
     cotisation: {
       endpoint: `${API_URL}/fee/${id}`,
       redirect: "/dash/allCotisations",
-      successMsg: "✅ Cotisation supprimée avec succès.",
-      confirmMsg: "Êtes-vous sûr de vouloir supprimer cette cotisation ?",
-      title: "Suppression de cotisation"
+      successMsg: "✅ Cotisation annulée avec succès.",
+      confirmMsg: "Êtes-vous sûr de vouloir annuler cette cotisation ?",
+      title: "Annulation de cotisation"
     }
   };
 
@@ -82,7 +82,7 @@ export default function DeleteItem({ mode }) { // mode = "user" ou "cotisation"
                 onClick={() => setConfirmed(true)}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-all"
               >
-                Oui, supprimer
+                Oui
               </button>
               <button
                 onClick={() => navigate(current.redirect)}
@@ -94,7 +94,7 @@ export default function DeleteItem({ mode }) { // mode = "user" ou "cotisation"
           </>
         ) : (
           <>
-            <p className="mb-4 text-yellow-200">Suppression en cours...</p>
+            <p className="mb-4 text-yellow-200">Operation en cours...</p>
             <button
               onClick={handleDelete}
               disabled={loading}
@@ -104,7 +104,7 @@ export default function DeleteItem({ mode }) { // mode = "user" ou "cotisation"
                   : "bg-red-600 hover:bg-red-700 text-white"
               }`}
             >
-              {loading ? "Suppression..." : "Confirmer la suppression"}
+              {loading ? "Loading..." : "Confirmer"}
             </button>
           </>
         )}

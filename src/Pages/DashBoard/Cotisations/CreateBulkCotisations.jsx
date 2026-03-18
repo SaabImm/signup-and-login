@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../../../Context/dataCont';
 import Title from '../../../Components/Title';
 import { fetchWithRefresh } from '../../../Components/api';
-import wilayasData from '../../../assets/data/wilayas.json'; 
+import wilayasData from '../../../assets/data/wilayas.json';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -14,18 +14,54 @@ export default function CreateBulkCotisation() {
   const [message, setMessage] = useState('');
   const [result, setResult] = useState(null);
 
-  const [formData, setFormData] = useState({
+  const [filters, setFilters] = useState({
     role: 'all',
     wilaya: 'all',
-    year: new Date().getFullYear(),
-    amount: '',
-    dueDate: '',
-    notes: ''
   });
 
-  const handleChange = (e) => {
+  const [cotisationFields, setCotisationFields] = useState({});
+  const [fieldConfigs, setFieldConfigs] = useState({});
+  const [creatableFieldsList, setCreatableFieldsList] = useState([]);
+
+  useEffect(() => {
+    if (!authData?.token) return;
+
+    const fetchCreatableFields = async () => {
+      try {
+        const viewerId = authData.user?._id || authData.user?.id;
+        const response = await fetch(
+          `${API_URL}/permissions/user/${viewerId}/crFields?model=Fee`,
+          { headers: { Authorization: `Bearer ${authData.token}` } }
+        );
+        const data = await response.json();
+        if (response.ok) {
+          setCreatableFieldsList(data.fields || []);
+          setFieldConfigs(data.configs || {});
+          const initial = {};
+          data.fields.forEach(field => {
+            if (field === 'year') initial[field] = new Date().getFullYear();
+            else if (field === 'dueDate') initial[field] = '';
+            else initial[field] = '';
+          });
+          setCotisationFields(initial);
+        } else {
+          console.error('Erreur chargement des champs créables');
+        }
+      } catch (error) {
+        console.error('Erreur réseau', error);
+      }
+    };
+    fetchCreatableFields();
+  }, [authData]);
+
+  const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleCotisationFieldChange = (e) => {
+    const { name, value } = e.target;
+    setCotisationFields(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -34,13 +70,34 @@ export default function CreateBulkCotisation() {
     setMessage('');
     setResult(null);
 
+    // Transformer les clés avec points en objets imbriqués
+    const nested = {};
+    Object.keys(cotisationFields).forEach(key => {
+      if (key.includes('.')) {
+        const parts = key.split('.');
+        let current = nested;
+        for (let i = 0; i < parts.length - 1; i++) {
+          current[parts[i]] = current[parts[i]] || {};
+          current = current[parts[i]];
+        }
+        current[parts[parts.length - 1]] = cotisationFields[key];
+      } else {
+        nested[key] = cotisationFields[key];
+      }
+    });
+
+    const payload = {
+      ...filters,
+      ...nested,
+    };
+
     try {
       const response = await fetchWithRefresh(
         `${API_URL}/fee/bulk-create`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
+          body: JSON.stringify(payload),
         },
         authData.token,
         setAuthData
@@ -61,19 +118,107 @@ export default function CreateBulkCotisation() {
     }
   };
 
+  const renderField = (fieldName) => {
+    const config = fieldConfigs[fieldName];
+    if (!config) return null;
+
+    const value = cotisationFields[fieldName] || '';
+
+    if (config.type === 'select') {
+      return (
+        <div key={fieldName}>
+          <label className="block text-sm font-medium text-gray-300 mb-2">{config.label}</label>
+          <select
+            name={fieldName}
+            value={value}
+            onChange={handleCotisationFieldChange}
+            required={config.validation?.required}
+            className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+          >
+            <option value="">Sélectionner...</option>
+            {config.validation?.options?.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    switch (config.type) {
+      case 'number':
+        return (
+          <div key={fieldName}>
+            <label className="block text-sm font-medium text-gray-300 mb-2">{config.label}</label>
+            <input
+              type="number"
+              name={fieldName}
+              value={value}
+              onChange={handleCotisationFieldChange}
+              min={config.validation?.min}
+              max={config.validation?.max}
+              step="1"
+              required={config.validation?.required}
+              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+        );
+      case 'date':
+        return (
+          <div key={fieldName}>
+            <label className="block text-sm font-medium text-gray-300 mb-2">{config.label}</label>
+            <input
+              type="date"
+              name={fieldName}
+              value={value}
+              onChange={handleCotisationFieldChange}
+              required={config.validation?.required}
+              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+        );
+      case 'textarea':
+        return (
+          <div key={fieldName}>
+            <label className="block text-sm font-medium text-gray-300 mb-2">{config.label}</label>
+            <textarea
+              name={fieldName}
+              value={value}
+              onChange={handleCotisationFieldChange}
+              rows="3"
+              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+        );
+      default:
+        return (
+          <div key={fieldName}>
+            <label className="block text-sm font-medium text-gray-300 mb-2">{config.label}</label>
+            <input
+              type={config.type || 'text'}
+              name={fieldName}
+              value={value}
+              onChange={handleCotisationFieldChange}
+              placeholder={config.ui?.placeholder}
+              required={config.validation?.required}
+              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen ml-[80px] p-8 bg-gradient-to-br from-gray-900 to-gray-800 text-yellow-400 font-urbanist">
       <Title title="Création en masse de cotisations" />
 
       <div className="max-w-2xl mx-auto bg-gray-800/60 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Role selection */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Rôle</label>
             <select
               name="role"
-              value={formData.role}
-              onChange={handleChange}
+              value={filters.role}
+              onChange={handleFilterChange}
               className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
             >
               <option value="all">Tous les rôles</option>
@@ -84,13 +229,12 @@ export default function CreateBulkCotisation() {
             </select>
           </div>
 
-          {/* Wilaya selection */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Wilaya</label>
             <select
               name="wilaya"
-              value={formData.wilaya}
-              onChange={handleChange}
+              value={filters.wilaya}
+              onChange={handleFilterChange}
               className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
             >
               <option value="all">Toutes les wilayas</option>
@@ -100,60 +244,13 @@ export default function CreateBulkCotisation() {
             </select>
           </div>
 
-          {/* Year */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Année</label>
-            <input
-              type="number"
-              name="year"
-              value={formData.year}
-              onChange={handleChange}
-              min="2000"
-              max="2100"
-              required
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-            />
-          </div>
-
-          {/* Amount */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Montant (DA)</label>
-            <input
-              type="number"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              min="0"
-              step="1"
-              required
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-            />
-          </div>
-
-          {/* Due date */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Date d'échéance</label>
-            <input
-              type="date"
-              name="dueDate"
-              value={formData.dueDate}
-              onChange={handleChange}
-              required
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-            />
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Notes (optionnel)</label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              rows="3"
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-            />
-          </div>
+          {creatableFieldsList
+            .sort((a, b) => {
+              const orderA = fieldConfigs[a]?.ui?.order || 0;
+              const orderB = fieldConfigs[b]?.ui?.order || 0;
+              return orderA - orderB;
+            })
+            .map(fieldName => renderField(fieldName))}
 
           {message && (
             <p className={`text-sm ${message.includes('✅') ? 'text-green-400' : 'text-red-400'}`}>

@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { UserContext } from "../../Context/dataCont";
 import { logoutContext } from "../../Context/logoutContext";
 import sabAvatar from '../../assets/SabrinaAvatar.jpg';
+import Title from '../Title'
 
 export default function Navbar() {
   const { authData } = useContext(UserContext);
@@ -33,8 +34,8 @@ export default function Navbar() {
 
           {/* Logo / Brand */}
           <div className="flex-shrink-0">
-            <Link to="#" className="text-2xl font-bold hover:text-yellow-400 transition-colors">
-              CNOA FORUM
+            <Link to="#">
+              <Title title="Gest Org"></Title>
             </Link>
           </div>
 

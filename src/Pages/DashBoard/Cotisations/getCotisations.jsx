@@ -24,70 +24,60 @@ export default function GetCotisations() {
     ? [...new Set(data.cotisations.map(c => c.year))].sort((a, b) => b - a)
     : [];
 
-    useEffect(() => {
+  // Fonction de rafraîchissement des données
+  const refreshCotisations = async () => {
     if (!authData?.token) return;
+    try {
+      const response = await fetchWithRefresh(
+        `${API_URL}/fee/`,
+        { method: "GET" },
+        authData.token,
+        setAuthData
+      );
+      const result = await response.json();
+      setData(result);
+    } catch (error) {
+      console.error("Erreur lors du chargement des cotisations :", error);
+    }
+  };
 
-    const fetchCotisations = async () => {
-      try {
-        const response = await fetchWithRefresh(
-          `${API_URL}/fee/`,
-          { method: "GET" },
-          authData.token,
-          setAuthData
-        );
-        const result = await response.json();
-        setData(result);
-      } catch (error) {
-        console.error("Erreur lors du chargement des cotisations :", error);
-      }
-    };
-
-    fetchCotisations();
-  }, [authData.token, setAuthData]);
+  useEffect(() => {
+    refreshCotisations();
+  }, [authData.token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Champs sur lesquels on peut rechercher
   const searchableFields = ["year", "status", "amount", "paymentMethod"];
 
   // Filtrage combiné
   const displayedCotisations = data?.cotisations?.filter((cot) => {
-    // Filtre par mot‑clé
     const matchesSearch = searchableFields.some((field) =>
       String(cot[field] || "").toLowerCase().includes(keyWord.toLowerCase())
     );
     if (!matchesSearch) return false;
 
-    // Filtre par statut
     if (selectedStatus !== "all" && cot.status !== selectedStatus) return false;
-
-    // Filtre par année
     if (selectedYear !== "all" && cot.year !== parseInt(selectedYear)) return false;
 
-    // Filtre par mode de paiement
     if (selectedPaymentMethod !== "all") {
-      const method = cot.paymentMethod || "null"; // pour gérer les valeurs nulles
+      const method = cot.paymentMethod || "null";
       if (selectedPaymentMethod === "null" && cot.paymentMethod !== null) return false;
       if (selectedPaymentMethod !== "null" && cot.paymentMethod !== selectedPaymentMethod) return false;
     }
-
     return true;
   }) || [];
 
-  // Réinitialiser tous les filtres
   const resetFilters = () => {
     setSelectedStatus("all");
     setSelectedYear("all");
     setSelectedPaymentMethod("all");
-    handleChange({ target: { name: "search", value: "" } }); // efface la recherche
+    handleChange({ target: { name: "search", value: "" } });
   };
 
-
-return (
+  return (
     <div className="min-h-screen ml-[80px] p-8 bg-gradient-to-br from-gray-900 to-gray-800 text-yellow-400 font-urbanist">
 
-      {/* Titre */}
       <Title title="Gestion des cotisations" />
 
-      {/* Barre de recherche et filtres */}
       <div className="relative mb-6 mt-4 flex flex-wrap items-center gap-3">
         <IoSearchOutline size={22} className="text-yellow-300" />
         <input
@@ -111,7 +101,6 @@ return (
           <option value="partial">Partiel</option>
           <option value="overdue">En retard</option>
           <option value="cancelled">Annulée</option>
-          
         </select>
 
         <select
@@ -147,15 +136,17 @@ return (
         </button>
       </div>
 
-      {/* Compteur de résultats */}
       <p className="mb-4 text-gray-400">
         {displayedCotisations.length} cotisation(s) trouvée(s)
       </p>
 
-      {/* Liste des cartes */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {displayedCotisations.map((cot) => (
-          <CotisationCard key={cot._id} cotisation={cot} />
+          <CotisationCard
+            key={cot._id}
+            cotisation={cot}
+            onCotisationUpdated={refreshCotisations} // ← callback de rafraîchissement
+          />
         ))}
       </div>
     </div>

@@ -29,6 +29,8 @@ export default function DataCards({ userItem }) {
         <h3 className="text-xl font-semibold text-white">{userItem.name} {userItem.lastname}</h3>
         <p className="text-gray-300">{userItem.email}</p>
         <p className="text-gray-400">Role: <span className="capitalize">{userItem.role}</span></p>
+        <p className="text-gray-400">Crédit: <span className="capitalize">{userItem.credit}</span></p>
+        <p className="text-gray-400">Créance: <span className="capitalize">{userItem.totalDebt}</span></p>
         <p className="text-gray-400">
           Status: 
           <span className={`ml-2 px-2 py-1 rounded-full text-sm font-medium ${

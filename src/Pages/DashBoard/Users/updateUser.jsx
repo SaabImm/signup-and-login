@@ -41,7 +41,6 @@ export default function UpdateUser() {
         });
         const permData = await permRes.json();
         setPermissions(permData);
-        console.log(permissions)
         
         // 3. Initialize form with user data (only fields that exist)
         const initialForm = {};

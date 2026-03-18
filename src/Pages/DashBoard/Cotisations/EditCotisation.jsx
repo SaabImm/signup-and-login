@@ -15,59 +15,66 @@ export default function EditCotisation() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
-  const [formData, setFormData] = useState({
-    year: "",
-    amount: "",
-    dueDate: "",
-    paymentDate: "",
-    status: "pending",
-    paymentMethod: "",
-    notes: ""
-  });
+  const [permissions, setPermissions] = useState(null);
+  const [formData, setFormData] = useState(null);
 
-  // Charger la cotisation
   useEffect(() => {
+    if (!authData?.token) return;
+
     const fetchCotisation = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/fee/${id}`,
-          { method: "GET",
-            headers: {
-            Authorization: `Bearer ${authData.token}`,
-          },
-           },
-          authData.token,
-          setAuthData
+        setLoading(true);
+        // 1. Récupérer la cotisation
+        const cotRes = await fetch(`${API_URL}/fee/${id}`, {
+          headers: { Authorization: `Bearer ${authData.token}` }
+        });
+        const cotData = await cotRes.json();
+        if (!cotRes.ok) throw new Error(cotData.message || "Erreur lors du chargement");
+
+        const cotisation = cotData.cotisation; // le backend renvoie { cotisation: ... }
+
+        // 2. Récupérer l'ID du propriétaire (l'utilisateur concerné)
+        const ownerId = cotisation.user?._id || cotisation.user;
+        if (!ownerId) throw new Error("Propriétaire de la cotisation introuvable");
+
+        // 3. Récupérer les permissions pour le modèle Fee
+        const permRes = await fetch(
+          `${API_URL}/permissions/user/${ownerId}/fields?model=Fee`,
+          { headers: { Authorization: `Bearer ${authData.token}` } }
         );
-        const data = await response.json();
-        console.log(data)
-        if (response.ok) {
-          const cot = data.cotisation || data; // adapter selon la structure de réponse
-          setFormData({
-            year: cot.year || "",
-            amount: cot.amount || "",
-            dueDate: cot.dueDate ? cot.dueDate.split("T")[0] : "",
-            paymentDate: cot.paymentDate ? cot.paymentDate.split("T")[0] : "",
-            status: cot.status || "pending",
-            paymentMethod: cot.paymentMethod || "",
-            notes: cot.notes || ""
-          });
-        } else {
-          setMessage(data.message || "Erreur lors du chargement");
-        }
+        const permData = await permRes.json();
+        if (!permRes.ok) throw new Error(permData.message || "Erreur de permissions");
+
+        setPermissions({
+          fields: permData.fields || [],
+          configs: permData.configs || {}
+        });
+
+        // 4. Initialiser le formulaire avec les champs éditables et les valeurs actuelles
+        const initialForm = {};
+        (permData.fields || []).forEach((field) => {
+          if (cotisation[field] !== undefined) {
+            initialForm[field] = cotisation[field];
+          }
+        });
+        setFormData(initialForm);
       } catch (error) {
         console.error(error);
-        setMessage("Erreur réseau");
+        setMessage(error.message);
       } finally {
         setLoading(false);
       }
     };
-    if (authData?.token) fetchCotisation();
+
+    fetchCotisation();
   }, [id, authData]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -102,10 +109,105 @@ export default function EditCotisation() {
     }
   };
 
+  // Render field based on config type
+  const renderField = (fieldName) => {
+    if (!permissions?.configs || !permissions.configs[fieldName]) return null;
+
+    const config = permissions.configs[fieldName];
+    const value = formData?.[fieldName] ?? "";
+
+    // Determine input type
+    let inputElement = null;
+    switch (config.type) {
+      case "select":
+        inputElement = (
+          <select
+            name={fieldName}
+            value={value}
+            onChange={handleChange}
+            className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+          >
+            <option value="">Sélectionner...</option>
+            {config.validation?.options?.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        );
+        break;
+      case "date":
+        inputElement = (
+          <input
+            type="date"
+            name={fieldName}
+            value={value ? value.split("T")[0] : ""}
+            onChange={handleChange}
+            className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+          />
+        );
+        break;
+      case "number":
+        inputElement = (
+          <input
+            type="number"
+            name={fieldName}
+            value={value}
+            onChange={handleChange}
+            min={config.validation?.min}
+            max={config.validation?.max}
+            step="1"
+            className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+          />
+        );
+        break;
+      case "textarea":
+        inputElement = (
+          <textarea
+            name={fieldName}
+            value={value}
+            onChange={handleChange}
+            rows="3"
+            className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+          />
+        );
+        break;
+      default:
+        // text, email, etc.
+        inputElement = (
+          <input
+            type={config.type || "text"}
+            name={fieldName}
+            value={value}
+            onChange={handleChange}
+            placeholder={config.ui?.placeholder}
+            className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+          />
+        );
+    }
+
+    return (
+      <div key={fieldName}>
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          {config.label}
+        </label>
+        {inputElement}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-yellow-300">Chargement...</div>
+      </div>
+    );
+  }
+
+  if (!formData || !permissions) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-400">Erreur : impossible de charger le formulaire</div>
       </div>
     );
   }
@@ -117,99 +219,21 @@ export default function EditCotisation() {
         <p className="text-gray-400 text-center mb-6">Année {formData.year}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Année</label>
-            <input
-              type="number"
-              name="year"
-              value={formData.year}
-              onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Montant (DA)</label>
-            <input
-              type="number"
-              name="amount"
-              value={formData.amount}
-              onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-              required
-              min="0"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Date d'échéance</label>
-            <input
-              type="date"
-              name="dueDate"
-              value={formData.dueDate}
-              onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Date de paiement</label>
-            <input
-              type="date"
-              name="paymentDate"
-              value={formData.paymentDate}
-              onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Statut</label>
-            <select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-            >
-              <option value="pending">En attente</option>
-              <option value="paid">Payée</option>
-              <option value="overdue">En retard</option>
-              <option value="cancelled">Annulée</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Mode de paiement</label>
-            <select
-              name="paymentMethod"
-              value={formData.paymentMethod || ""}
-              onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-            >
-              <option value="">Non renseigné</option>
-              <option value="cash">Espèces</option>
-              <option value="bank_transfer">Virement</option>
-              <option value="check">Chèque</option>
-              <option value="online">En ligne</option>
-              <option value="other">Autre</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Notes</label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              rows="3"
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
-            />
-          </div>
+          {/* Render fields dynamically in order */}
+          {permissions.fields
+            .sort(
+              (a, b) =>
+                (permissions.configs[a]?.ui?.order || 0) -
+                (permissions.configs[b]?.ui?.order || 0)
+            )
+            .map((fieldName) => renderField(fieldName))}
 
           {message && (
-            <p className={`text-sm text-center ${message.includes("✅") ? "text-green-400" : "text-red-400"}`}>
+            <p
+              className={`text-sm text-center ${
+                message.includes("✅") ? "text-green-400" : "text-red-400"
+              }`}
+            >
               {message}
             </p>
           )}

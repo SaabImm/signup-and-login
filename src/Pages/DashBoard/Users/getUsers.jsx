@@ -140,7 +140,7 @@ export default function GetUsers({ mode }) { // mode: "membres" or "users"
         )}
 
         {/* Filtre par profession */}
-        {uniqueProfessions.length > 0 && (
+        {/* {uniqueProfessions.length > 0 && (
           <select
             value={selectedProfession}
             onChange={(e) => setSelectedProfession(e.target.value)}
@@ -151,9 +151,9 @@ export default function GetUsers({ mode }) { // mode: "membres" or "users"
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
-        )}
+        )} */}
         {/* Filtre par role */}
-        {uniqueRoles.length > 0 && (
+        {uniqueRoles.length > 0 && mode==="users" && (
           <select
             value={selectedRole}
             onChange={(e) => setSelectedRole(e.target.value)}
