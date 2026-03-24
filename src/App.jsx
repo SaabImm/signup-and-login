@@ -22,9 +22,13 @@ import EditCotisation from "./Pages/DashBoard/Cotisations/EditCotisation";
 import DeleteItem from './Components/deleteItem';
 import AdminUserView from './Pages/DashBoard/Users/AdminView/AdminUserView';
 import GetCotisations from "./Pages/DashBoard/Cotisations/getCotisations";
-import FeeStats from "./Pages/DashBoard/Stats/FeeStats"
+import FeeStats from "./Pages/DashBoard/Stats/FeeStats";
 import UserStats from "./Pages/DashBoard/Stats/UserStats";
 import CreateBulkCotisation from "./Pages/DashBoard/Cotisations/CreateBulkCotisations";
+import PermissionManager from "./Pages/DashBoard/Permissions/PermissionConfig";
+import PermissionDetails from "./Pages/DashBoard/Permissions/getSchema";
+import NewVersion from "./Pages/DashBoard/Permissions/createVersion";
+import EditVersion from "./Pages/DashBoard/Permissions/EditVersion";
 
 export default function App() {
   return (
@@ -68,11 +72,18 @@ export default function App() {
         <Route path="create" element={<CreateUser />} />
         <Route path="ajouterCotisation" element={<CreateBulkCotisation />} />
 
+
+        <Route path="permissions" element={<PermissionManager />} />
+        <Route path="permissions/:model/:version" element={<PermissionDetails />} />
+        <Route path="permissions/new/:model" element={<NewVersion />} />
+        <Route path="permissions/edit/:versionId" element={<EditVersion />} />
+
+
         <Route path="delete/:id" element={<DeleteItem mode='user' />} />
         <Route path="delete/fee/:id" element={<DeleteItem mode='cotisation' />} />
         <Route path="adminUser/:id" element={<AdminUserView />} />
-        <Route path="feeStats/" element={<FeeStats />} />
-        <Route path="userStats/" element={<UserStats />} />
+        <Route path="feeStats" element={<FeeStats />} />
+        <Route path="userStats" element={<UserStats />} />
 
       </Route>
 

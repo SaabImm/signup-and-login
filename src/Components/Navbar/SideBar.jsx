@@ -168,6 +168,18 @@ export default function SideBar() {
           )}
         </div>
 
+                {userRole === 'super_admin' && (
+          <button
+            onClick={() => navigate("/dash/permissions")}
+            className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-colors ${
+              isActive("/dash/permissions") 
+                ? "bg-yellow-300 text-gray-900 shadow-lg" 
+                : "hover:bg-yellow-400 hover:text-gray-900"
+            }`}
+          >
+            Configuration
+          </button>
+        )}
         {/* Stats DropDown */}
         <div className="relative">
           <button
