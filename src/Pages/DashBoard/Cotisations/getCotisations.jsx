@@ -18,6 +18,7 @@ export default function GetCotisations() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedYear, setSelectedYear] = useState("all");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("all");
+  const [selectedFeeType, setselectedFeeType] = useState("all");
 
   // Récupérer les années uniques pour le filtre
   const years = data?.cotisations
@@ -46,16 +47,18 @@ export default function GetCotisations() {
   }, [authData.token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Champs sur lesquels on peut rechercher
-  const searchableFields = ["year", "status", "amount", "paymentMethod"];
+  const searchableFields = ["year", "status", "amount", "paymentMethod", "feeType"];
 
   // Filtrage combiné
   const displayedCotisations = data?.cotisations?.filter((cot) => {
+
     const matchesSearch = searchableFields.some((field) =>
       String(cot[field] || "").toLowerCase().includes(keyWord.toLowerCase())
     );
     if (!matchesSearch) return false;
 
     if (selectedStatus !== "all" && cot.status !== selectedStatus) return false;
+    if (selectedFeeType !== "all" && cot.feeType !== selectedFeeType) return false;
     if (selectedYear !== "all" && cot.year !== parseInt(selectedYear)) return false;
 
     if (selectedPaymentMethod !== "all") {
@@ -70,6 +73,7 @@ export default function GetCotisations() {
     setSelectedStatus("all");
     setSelectedYear("all");
     setSelectedPaymentMethod("all");
+    setselectedFeeType("all");
     handleChange({ target: { name: "search", value: "" } });
   };
 
@@ -101,6 +105,19 @@ export default function GetCotisations() {
           <option value="partial">Partiel</option>
           <option value="overdue">En retard</option>
           <option value="cancelled">Annulée</option>
+        </select>
+
+          <select
+          value={selectedFeeType}
+          onChange={(e) => setselectedFeeType(e.target.value)}
+          className="px-4 py-2 rounded-xl bg-gray-900/40 backdrop-blur-md text-yellow-300 border border-gray-700/40 shadow-lg outline-none"
+        >
+          <option value="all">Tous les types</option>
+          <option value="annual">Anuelle</option>
+          <option value="event">Evenement</option>
+          <option value="training">Formation</option>
+          <option value="exceptional">Exceptionelle</option>
+          <option value="other">Autre</option>
         </select>
 
         <select

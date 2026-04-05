@@ -10,7 +10,6 @@ import AddFileCard from '../Components/Cards/AddFileCard';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-// Petit composant pour afficher un paiement
 function PaymentCard({ payment }) {
   const date = new Date(payment.date).toLocaleDateString('fr-FR');
   return (
@@ -39,6 +38,51 @@ function PaymentCard({ payment }) {
   );
 }
 
+// New component for credit transactions
+function CreditTransactionCard({ transaction }) {
+  const date = new Date(transaction.date).toLocaleDateString('fr-FR');
+  const isPositive = transaction.amount > 0;
+  const amountColor = isPositive ? 'text-green-400' : 'text-red-400';
+  const amountPrefix = isPositive ? '+' : '';
+
+  const typeLabels = {
+    deposit: 'Dépôt',
+    used_for_fee: 'Utilisé pour cotisation',
+    excess_from_fee: 'Remboursement (excedent)',
+    versement: 'Versement'
+  };
+
+  return (
+    <div className="bg-gray-800/60 backdrop-blur-sm border border-blue-400/20 rounded-xl p-4 shadow-lg">
+      <div className="flex justify-between items-start mb-2">
+        <span className="text-blue-300 font-medium">Crédit</span>
+        <span className="text-xs text-gray-400">{date}</span>
+      </div>
+      <div className="space-y-1 text-sm">
+        <div className="flex justify-between">
+          <span className="text-gray-400">Montant :</span>
+          <span className={`font-mono ${amountColor}`}>
+            {amountPrefix}{transaction.amount} DA
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-400">Type :</span>
+          <span className="capitalize">{typeLabels[transaction.type] || transaction.type}</span>
+        </div>
+        {transaction.paymentMethod && (
+          <div className="flex justify-between">
+            <span className="text-gray-400">Mode :</span>
+            <span className="capitalize">{transaction.paymentMethod}</span>
+          </div>
+        )}
+        {transaction.notes && (
+          <div className="text-gray-500 text-xs mt-1">{transaction.notes}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilePage({ user }) {
   const { authData, setAuthData } = useContext(UserContext);
   const { id } = useParams();
@@ -49,17 +93,211 @@ export default function ProfilePage({ user }) {
   const [loading, setLoading] = useState(true);
   const [popup, setPopup] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [payments, setPayments] = useState([]); // ← nouvel état
+  const [payments, setPayments] = useState([]);
+  const [userFees, setUserFees] = useState([]);
+  const [creditTransactions, setCreditTransactions] = useState([]); // new state
+
+  // Versement modal state
+  const [showVersementModal, setShowVersementModal] = useState(false);
+  const [versementAmount, setVersementAmount] = useState('');
+  const [versementMethod, setVersementMethod] = useState('cash');
+  const [versementNotes, setVersementNotes] = useState('');
 
   const targetUserId = user?._id || id || authData.user?._id;
   const isOwner = authData.user?._id === targetUserId;
 
+  // --- Popup handler ---
+  const handlePopup = (type, message, duration = 3000) => {
+    setPopup({ type, message });
+    setTimeout(() => setPopup(null), duration);
+  };
+
+  // --- File handlers (unchanged) ---
+  const handleUpload = async (file) => {
+    try {
+      setIsUploading(true);
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      uploadData.append("folder", "uploads");
+
+      const response = await fetch(`${API_URL}/upload/${displayUser._id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${authData.token}` },
+        body: uploadData,
+      });
+
+      const data = await response.json();
+
+      if (response.status === 413) {
+        handlePopup("error", data.message || "File is too large");
+        return;
+      }
+      if (!response.ok) {
+        handlePopup("error", data.message || "Upload failed");
+        return;
+      }
+
+      if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
+      else setDisplayUser(data.user);
+
+      handlePopup("success", "File uploaded successfully ✅");
+    } catch (err) {
+      console.error(err);
+      handlePopup("error", "Network error. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleReplace = async (file, newFile) => {
+    try {
+      setIsUploading(true);
+      const uploadData = new FormData();
+      uploadData.append("file", newFile);
+      uploadData.append("folder", "uploads");
+
+      const response = await fetch(`${API_URL}/upload/${file._id}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${authData.token}` },
+        body: uploadData,
+      });
+
+      const data = await response.json();
+
+      if (response.status === 413) {
+        handlePopup("error", data.message || "File is too large");
+        return;
+      }
+      if (!response.ok) {
+        handlePopup("error", data.message || "Replace failed");
+        return;
+      }
+
+      if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
+      else setDisplayUser(data.user);
+
+      handlePopup("success", "File replaced successfully ✅");
+    } catch (err) {
+      console.error(err);
+      handlePopup("error", "Network error. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDelete = async (file) => {
+    try {
+      setIsUploading(true);
+      const response = await fetch(`${API_URL}/upload/${file._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authData.token}` },
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        handlePopup("error", data.message || "Delete failed");
+        return;
+      }
+
+      if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
+      else setDisplayUser(data.user);
+
+      handlePopup("success", "File deleted successfully ✅");
+    } catch (err) {
+      console.error(err);
+      handlePopup("error", "Network error. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // --- Refresh user (credit) and fees after versement ---
+  const refreshUserAndFees = async () => {
+    try {
+      // Refresh user data (including credit)
+      const userRes = await fetch(`${API_URL}/user/${targetUserId}`, {
+        headers: { Authorization: `Bearer ${authData.token}` }
+      });
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        const updatedUser = userData.user;
+        setDisplayUser(updatedUser);
+        if (isOwner) setAuthData(prev => ({ ...prev, user: updatedUser }));
+      }
+      // Refresh fees
+      await refreshUserFees();
+      // Refresh credit transactions as well
+      await fetchCreditTransactions();
+    } catch (error) {
+      console.error("Error refreshing user and fees:", error);
+    }
+  };
+
+  const refreshUserFees = async () => {
+    try {
+      const feesRes = await fetch(`${API_URL}/fee/user/${targetUserId}`, {
+        headers: { Authorization: `Bearer ${authData.token}` }
+      });
+      if (feesRes.ok) {
+        const feesData = await feesRes.json();
+        setUserFees(feesData.cotisations);
+      } else {
+        console.warn("Erreur lors du rafraîchissement des cotisations");
+      }
+    } catch (error) {
+      console.error("Error refreshing fees:", error);
+    }
+  };
+
+  // Fetch credit transactions from backend
+  const fetchCreditTransactions = async () => {
+    try {
+      const res = await fetch(`${API_URL}/credit/user/${targetUserId}`, {
+        headers: { Authorization: `Bearer ${authData.token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCreditTransactions(data.transactions || data);
+      } else {
+        console.warn("Impossible de charger les transactions de crédit");
+      }
+    } catch (error) {
+      console.error("Error fetching credit transactions:", error);
+    }
+  };
+
+  // --- Versement handler ---
+  const handleVersement = async (amount, method, notes) => {
+    try {
+      const res = await fetch(`${API_URL}/fee/versement`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authData.token}` },
+        body: JSON.stringify({ userId: targetUserId, amount, paymentMethod: method, notes })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        handlePopup('success', `${data.usedForFees} DA utilisé pour les cotisations, ${data.creditAdded} DA ajoutés au crédit.`);
+        await refreshUserAndFees();
+        setShowVersementModal(false);
+        // Reset form
+        setVersementAmount('');
+        setVersementMethod('cash');
+        setVersementNotes('');
+      } else {
+        handlePopup('error', data.error);
+      }
+    } catch (err) {
+      console.error(err);
+      handlePopup('error', 'Erreur réseau');
+    }
+  };
+
+  // --- Data fetching ---
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // 1. Récupérer les données utilisateur
         let userData = user;
         if (!userData && id) {
           const userRes = await fetch(`${API_URL}/user/${id}`, {
@@ -70,14 +308,12 @@ export default function ProfilePage({ user }) {
         }
         setDisplayUser(userData || authData.user);
 
-        // 2. Permissions (champs visibles)
         const permRes = await fetch(`${API_URL}/permissions/user/${targetUserId}/vwFields?model=User`, {
           headers: { Authorization: `Bearer ${authData.token}` }
         });
         const permData = await permRes.json();
         setPermissions(permData);
 
-        // 3. Opérations autorisées (pour les fichiers)
         const opRes = await fetch(`${API_URL}/permissions/${targetUserId}/check-operation`, {
           method: 'POST',
           headers: {
@@ -89,16 +325,24 @@ export default function ProfilePage({ user }) {
         const opData = await opRes.json();
         setPerform(opData.canPerform);
 
-        // 4. Récupérer les paiements de l'utilisateur
         const paymentsRes = await fetch(`${API_URL}/payement/user/${targetUserId}`, {
           headers: { Authorization: `Bearer ${authData.token}` }
         });
         if (paymentsRes.ok) {
           const paymentsData = await paymentsRes.json();
           setPayments(paymentsData);
-        } else {
-          console.warn("Impossible de charger les paiements");
         }
+
+        const feesRes = await fetch(`${API_URL}/fee/user/${targetUserId}`, {
+          headers: { Authorization: `Bearer ${authData.token}` }
+        });
+        if (feesRes.ok) {
+          const feesData = await feesRes.json();
+          setUserFees(feesData.cotisations);
+        }
+
+        // Fetch credit transactions
+        await fetchCreditTransactions();
 
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -113,9 +357,14 @@ export default function ProfilePage({ user }) {
     }
   }, [id, user, authData, targetUserId]);
 
+  const totalDebt = userFees.reduce((sum, fee) => {
+    const computed = fee.computed || {};
+    const remaining = computed.remaining || 0;
+    return sum + (remaining > 0 ? remaining : 0);
+  }, 0);
+
   const PROFILE_URL = displayUser?.profilePicture || sabAvatar;
   const files = displayUser?.files || [];
-  const fees = displayUser?.fees;
 
   const roleColors = {
     admin: "bg-red-200/20 text-red-300 border-red-400/40",
@@ -128,16 +377,6 @@ export default function ProfilePage({ user }) {
     : "bg-yellow-400/20 text-yellow-300 border-yellow-400/40";
 
   const verificationText = displayUser?.isAdminVerified ? "Validated" : "Pending Validation";
-
-  // --- Handlers ---
-  const handlePopup = (type, message, duration = 3000) => {
-    setPopup({ type, message });
-    setTimeout(() => setPopup(null), duration);
-  };
-
-  const handleUpload = async (file) => { /* inchangé */ };
-  const handleReplace = async (file, newFile) => { /* inchangé */ };
-  const handleDelete = async (file) => { /* inchangé */ };
 
   if (loading) {
     return (
@@ -153,12 +392,15 @@ export default function ProfilePage({ user }) {
   return (
     <>
       <div className="min-h-screen bg-gray-900 pb-16 relative">
-        {/* Spinner, popup, gold cover... (inchangé) */}
+
+        {/* Spinner Overlay */}
         {isUploading && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
             <div className="w-16 h-16 border-4 border-yellow-300 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
+
+        {/* Popup Toast */}
         {popup && (
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
             <div className={`px-6 py-4 rounded-lg shadow-xl border text-sm font-medium pointer-events-auto
@@ -171,15 +413,14 @@ export default function ProfilePage({ user }) {
           </div>
         )}
 
+        {/* Gold Cover */}
         <div className="h-40 bg-yellow-400/80 shadow-md"></div>
 
-        {/* --- PROFILE CARD --- */}
+        {/* Profile Card */}
         <div className="w-3/4 mx-auto -mt-20 bg-gray-800/80 backdrop-blur-xl border border-yellow-400/30 rounded-xl shadow-xl p-10 flex gap-10 items-center relative">
-          {/* Avatar */}
           {displayUser?.profilePicture && (
             <img src={PROFILE_URL} alt="Profile" className="w-40 h-40 object-cover rounded-full border-4 border-yellow-300 shadow-[0_0_20px_rgba(255,215,100,0.4)]" />
           )}
-          {/* Infos principales */}
           <div className="flex-1 space-y-2">
             {isVisible('name') && isVisible('lastname') && (
               <h2 className="text-3xl font-semibold text-white tracking-tight">
@@ -198,27 +439,37 @@ export default function ProfilePage({ user }) {
               </span>
             </div>
           </div>
-          {/* Admin tag */}
           {isVisible('role') && displayUser?.role === "admin" && (
             <div className="absolute top-6 right-6 bg-yellow-300/10 px-4 py-1 rounded-full text-sm shadow-md text-yellow-200 border border-yellow-300/20">
               ADMIN ACCESS
             </div>
           )}
 
-          {/* --- CRÉDIT & CRÉANCE --- */}
+          {/* Credit & Debt Card - with Versement Button inside */}
           <div className="w-2/4 mx-auto mt-6 bg-blue-900/30 border border-blue-400/30 rounded-xl p-4">
             <div className="flex justify-between items-center">
               <span className="text-blue-300 font-medium">Crédit disponible :</span>
-              <span className="text-blue-200 font-mono text-xl">{displayUser.credit} DA</span>
+              <div className="flex items-center gap-3">
+                <span className="text-blue-200 font-mono text-xl">{displayUser.credit} DA</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-blue-300 font-medium">Créance :</span>
-              <span className="text-blue-200 font-mono text-xl">{displayUser.totalDebt} DA</span>
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-blue-300 font-medium">Créances :</span>
+              <span className="text-blue-200 font-mono text-xl">{totalDebt} DA</span>
+            </div>
+
+            <div className="w-2/4 mx-auto mt-3 flex justify-center">
+              <button
+                onClick={() => setShowVersementModal(true)}
+                className="px-6 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition shadow-md"
+              >
+                + Effectuer un versement
+              </button>
             </div>
           </div>
         </div>
 
-        {/* --- PERSONAL DETAILS --- */}
+        {/* Personal Details */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Personal Details" textColor="text-yellow-300" />
@@ -241,7 +492,7 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* --- FILES --- */}
+        {/* Files */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Files" textColor="text-yellow-300" />
@@ -254,21 +505,28 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* --- COTISATIONS --- */}
+        {/* Cotisations */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Cotisations" textColor="text-yellow-300" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-            {fees && fees.length > 0 ? (
-              fees.map((fee) => <CotisationCard key={fee._id} cotisation={fee} />)
+            {userFees && userFees.length > 0 ? (
+              userFees.map((fee) => (
+                <CotisationCard
+                  key={fee._id}
+                  cotisation={fee}
+                  isOwner={isOwner}
+                  onCotisationUpdated={refreshUserFees}
+                />
+              ))
             ) : (
               <p className="text-gray-400 col-span-full text-center py-8">Aucune cotisation trouvée pour ce membre.</p>
             )}
           </div>
         </div>
 
-        {/* --- PAIEMENTS --- */}
+        {/* Payments */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Historique des paiements" textColor="text-yellow-300" />
@@ -281,12 +539,84 @@ export default function ProfilePage({ user }) {
             )}
           </div>
         </div>
+
+        {/* Credit Transactions (new section) */}
+        <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-blue-400/20 p-10">
+          <div className="flex justify-between items-center mb-6">
+            <Title title="Historique des crédits" textColor="text-blue-300" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            {creditTransactions.length > 0 ? (
+              creditTransactions.map((tx) => (
+                <CreditTransactionCard key={tx._id} transaction={tx} />
+              ))
+            ) : (
+              <p className="text-gray-400 col-span-full text-center py-8">Aucune transaction de crédit trouvée.</p>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Versement Modal */}
+      {showVersementModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-gray-800 rounded-xl p-6 w-96 border border-yellow-400/30 shadow-2xl">
+            <h3 className="text-xl font-bold text-yellow-300 mb-4">Versement</h3>
+            <div className="space-y-4">
+              <input
+                type="number"
+                placeholder="Montant (DA)"
+                value={versementAmount}
+                onChange={(e) => setVersementAmount(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-900 rounded text-white border border-gray-700 focus:outline-none focus:border-yellow-400"
+              />
+              <select
+                value={versementMethod}
+                onChange={(e) => setVersementMethod(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-900 rounded text-white border border-gray-700 focus:outline-none focus:border-yellow-400"
+              >
+                <option value="cash">Espèces</option>
+                <option value="bank_transfer">Virement</option>
+                <option value="check">Chèque</option>
+                <option value="online">En ligne</option>
+                <option value="other">Autre</option>
+              </select>
+              <textarea
+                placeholder="Notes (optionnel)"
+                value={versementNotes}
+                onChange={(e) => setVersementNotes(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-900 rounded text-white border border-gray-700 focus:outline-none focus:border-yellow-400"
+                rows="2"
+              />
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  onClick={() => setShowVersementModal(false)}
+                  className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500 transition text-white"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => {
+                    const amountNum = parseFloat(versementAmount);
+                    if (isNaN(amountNum) || amountNum <= 0) {
+                      handlePopup('error', 'Montant invalide');
+                      return;
+                    }
+                    handleVersement(amountNum, versementMethod, versementNotes);
+                  }}
+                  className="px-4 py-2 bg-green-600 rounded hover:bg-green-500 transition text-white"
+                >
+                  Confirmer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
 
-// --- DetailBox Component ---
 function DetailBox({ label, value }) {
   return (
     <div className="p-4 rounded-lg bg-gray-900/40 border border-yellow-400/10">

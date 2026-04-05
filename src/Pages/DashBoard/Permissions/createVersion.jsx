@@ -49,7 +49,7 @@ export default function NewVersion() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ schema, status }) 
+          body: JSON.stringify({ schema, status }) // send the chosen status
         },
         authData.token,
         setAuthData

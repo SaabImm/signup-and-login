@@ -21,8 +21,9 @@ export default function FormulaireCNOA() {
     lastname: "",
     email: "",
     dateOfBirth: "",
-    sexe: "",          // Nouveau champ
-    registrationNumber: "", // Nouveau champ
+    sexe: "",
+    registrationNumber: "",
+    startDate: "",
     password: "",
     secondPassword: "",
   });
@@ -54,6 +55,7 @@ export default function FormulaireCNOA() {
           dateOfBirth: formData.dateOfBirth,
           sexe: formData.sexe,
           registrationNumber: formData.registrationNumber,
+          startDate: formData.startDate,
         }),
       });
 
@@ -82,71 +84,126 @@ export default function FormulaireCNOA() {
         </h2>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <input
-            onChange={handleChange}
-            type="text"
-            name="name"
-            placeholder="Nom"
-            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
-          />
-          <input
-            onChange={handleChange}
-            type="text"
-            name="lastname"
-            placeholder="Prénom"
-            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
-          />
-          <input
-            onChange={handleChange}
-            type="date"
-            name="dateOfBirth"
-            min="1900-01-01"
-            max={maxDate}
-            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
-          />
+          {/* Nom */}
+          <div>
+            <label className="block text-sm text-yellow-300 mb-1">Nom</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Votre nom"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            />
+          </div>
 
-          {/* Nouveau champ : Sexe */}
-          <select
-            onChange={handleChange}
-            name="sexe"
-            value={formData.sexe}
-            className="w-full p-3 bg-gray-800 text-yellow-300 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
-          >
-            <option value="">Sélectionnez votre sexe</option>
-            <option value="homme">Homme</option>
-            <option value="femme">Femme</option>
-          </select>
+          {/* Prénom */}
+          <div>
+            <label className="block text-sm text-yellow-300 mb-1">Prénom</label>
+            <input
+              type="text"
+              name="lastname"
+              placeholder="Votre prénom"
+              value={formData.lastname}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            />
+          </div>
 
-          {/* Nouveau champ : Numéro d'inscription */}
-          <input
-            onChange={handleChange}
-            type="text"
-            name="registrationNumber"
-            placeholder="Numéro d'inscription"
-            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
-          />
+          {/* Date de naissance */}
+          <div>
+            <label className="block text-sm text-yellow-300 mb-1">Date de naissance</label>
+            <input
+              type="date"
+              name="dateOfBirth"
+              min="1900-01-01"
+              max={maxDate}
+              value={formData.dateOfBirth}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            />
+          </div>
 
-          <input
-            onChange={handleChange}
-            type="email"
-            name="email"
-            placeholder="E-mail"
-            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
-          />
-          <input
-            onChange={handleChange}
-            type="password"
-            name="password"
-            placeholder="Mot de Passe"
-            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
-          />
-          <input
-            onChange={handleChange}
-            type="password"
-            name="secondPassword"
-            placeholder="Confirmez votre Mot de Passe"
-            className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
-          />
+          {/* Sexe */}
+          <div>
+            <label className="block text-sm text-yellow-300 mb-1">Sexe</label>
+            <select
+              name="sexe"
+              value={formData.sexe}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-800 text-yellow-300 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            >
+              <option value="">Sélectionnez votre sexe</option>
+              <option value="homme">Homme</option>
+              <option value="femme">Femme</option>
+            </select>
+          </div>
+
+          {/* Numéro d'inscription */}
+          <div>
+            <label className="block text-sm text-yellow-300 mb-1">Numéro d'inscription</label>
+            <input
+              type="text"
+              name="registrationNumber"
+              placeholder="N° d'inscription à l'ordre"
+              value={formData.registrationNumber}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            />
+          </div>
+
+          {/* Date de début d'activité */}
+          <div>
+            <label className="block text-sm text-yellow-300 mb-1">Date de début d'activité</label>
+            <input
+              type="date"
+              name="startDate"
+              min="1900-01-01"
+              max={maxDate}
+              value={formData.startDate}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-sm text-yellow-300 mb-1">Adresse e-mail</label>
+            <input
+              type="email"
+              name="email"
+              placeholder="email@exemple.com"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            />
+          </div>
+
+          {/* Mot de passe */}
+          <div>
+            <label className="block text-sm text-yellow-300 mb-1">Mot de passe</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Mot de passe"
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            />
+          </div>
+
+          {/* Confirmation mot de passe */}
+          <div>
+            <label className="block text-sm text-yellow-300 mb-1">Confirmer le mot de passe</label>
+            <input
+              type="password"
+              name="secondPassword"
+              placeholder="Confirmez votre mot de passe"
+              value={formData.secondPassword}
+              onChange={handleChange}
+              className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
+            />
+          </div>
 
           <button
             type="submit"

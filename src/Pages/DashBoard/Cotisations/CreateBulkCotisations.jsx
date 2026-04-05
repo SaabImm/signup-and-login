@@ -15,7 +15,7 @@ export default function CreateBulkCotisation() {
   const [result, setResult] = useState(null);
 
   const [filters, setFilters] = useState({
-    role: 'all',
+    role: 'user',
     wilaya: 'all',
   });
 
@@ -43,6 +43,9 @@ export default function CreateBulkCotisation() {
             else if (field === 'dueDate') initial[field] = '';
             else initial[field] = '';
           });
+          // Default values for penalty fields
+          initial['penaltyConfig.rate'] = 0;
+          initial['penaltyConfig.frequency'] = 'once';
           setCotisationFields(initial);
         } else {
           console.error('Erreur chargement des champs créables');
@@ -53,6 +56,22 @@ export default function CreateBulkCotisation() {
     };
     fetchCreatableFields();
   }, [authData]);
+
+  // Helper to know if penalty fields should be disabled
+  const isPenaltyDisabled = () => {
+    return cotisationFields['penaltyConfig.type'] === 'none';
+  };
+
+  // Reset penalty fields when type becomes 'none'
+  useEffect(() => {
+    if (isPenaltyDisabled()) {
+      setCotisationFields(prev => ({
+        ...prev,
+        'penaltyConfig.rate': 0,
+        'penaltyConfig.frequency': 'once',
+      }));
+    }
+  }, [cotisationFields['penaltyConfig.type']]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -122,7 +141,8 @@ export default function CreateBulkCotisation() {
     const config = fieldConfigs[fieldName];
     if (!config) return null;
 
-    const value = cotisationFields[fieldName] || '';
+    const value = cotisationFields[fieldName] !== undefined ? cotisationFields[fieldName] : '';
+    const isDisabled = (fieldName === 'penaltyConfig.rate' || fieldName === 'penaltyConfig.frequency') && isPenaltyDisabled();
 
     if (config.type === 'select') {
       return (
@@ -133,7 +153,8 @@ export default function CreateBulkCotisation() {
             value={value}
             onChange={handleCotisationFieldChange}
             required={config.validation?.required}
-            className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+            disabled={isDisabled}
+            className={`w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <option value="">Sélectionner...</option>
             {config.validation?.options?.map(opt => (
@@ -158,7 +179,8 @@ export default function CreateBulkCotisation() {
               max={config.validation?.max}
               step="1"
               required={config.validation?.required}
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+              disabled={isDisabled}
+              className={`w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
           </div>
         );
@@ -172,7 +194,8 @@ export default function CreateBulkCotisation() {
               value={value}
               onChange={handleCotisationFieldChange}
               required={config.validation?.required}
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+              disabled={isDisabled}
+              className={`w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
           </div>
         );
@@ -185,7 +208,8 @@ export default function CreateBulkCotisation() {
               value={value}
               onChange={handleCotisationFieldChange}
               rows="3"
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+              disabled={isDisabled}
+              className={`w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
           </div>
         );
@@ -200,7 +224,8 @@ export default function CreateBulkCotisation() {
               onChange={handleCotisationFieldChange}
               placeholder={config.ui?.placeholder}
               required={config.validation?.required}
-              className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
+              disabled={isDisabled}
+              className={`w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
           </div>
         );

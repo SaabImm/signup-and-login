@@ -76,10 +76,10 @@ export default function UpdateUser() {
     e.preventDefault();
     setSubmitting(true);
     
-    // Only send fields that are in formData (which are only editable fields)
+
     const payload = {
       ...formData,
-      password: formData.password // Always include password for verification
+      password: formData.password
     };
     
     try {
