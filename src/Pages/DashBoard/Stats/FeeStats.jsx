@@ -21,10 +21,10 @@ export default function FeeStats() {
           setAuthData
         );
         const data = await res.json();
-        if (data.success) {
+        if (res.ok) {
           setStats(data);
         } else {
-          setError('Impossible de charger les statistiques');
+          setError(data.message || 'Impossible de charger les statistiques');
         }
       } catch (err) {
         console.error(err);
@@ -52,80 +52,102 @@ export default function FeeStats() {
     );
   }
 
-  const { global, byYear, byMethod } = stats || { global: {}, byYear: [], byMethod: [] };
+  const {
+    totalFees = 0,
+    totalProjected = 0,
+    totalPaid = 0,
+    totalRemaining = 0,
+    totalPaidByCredit = 0,
+    totalPaidByCash = 0,
+    totalVersements = 0,
+    totalRepayments = 0,
+    netCreditAdded = 0,
+    byStatus = {}
+  } = stats || {};
 
-  // Formater les montants (exemple : en DA)
+  const paymentRate = totalProjected > 0 ? ((totalPaid / totalProjected) * 100).toFixed(1) : 0;
+
   const formatAmount = (amount) => new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: 'DZD' }).format(amount || 0);
 
   return (
     <div className="min-h-screen ml-[80px] p-8 bg-gradient-to-br from-gray-900 to-gray-800 text-yellow-400 font-urbanist">
       <Title title="Statistiques des cotisations" />
 
-      {/* Cartes récapitulatives */}
+      {/* Cartes récapitulatives principales */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           label="Total collecté"
-          value={formatAmount(global.totalPaid)}
+          value={formatAmount(totalPaid)}
           bg="bg-green-600/20"
           border="border-green-500"
         />
         <StatCard
-          label="Total en attente"
-          value={formatAmount(global.totalPending)}
+          label="Total restant dû"
+          value={formatAmount(totalRemaining)}
           bg="bg-yellow-600/20"
           border="border-yellow-500"
         />
         <StatCard
           label="Nombre de cotisations"
-          value={global.countAll || 0}
+          value={totalFees}
           bg="bg-blue-600/20"
           border="border-blue-500"
         />
         <StatCard
           label="Taux de paiement"
-          value={`${global.paymentRate || 0} %`}
+          value={`${paymentRate} %`}
           bg="bg-purple-600/20"
           border="border-purple-500"
         />
       </div>
 
-      {/* Graphiques simples – sous forme de listes pour l'instant */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Répartition par année */}
-        <div className="bg-gray-800/60 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-yellow-300 mb-4">Par année</h3>
-          <div className="space-y-3">
-            {byYear.map((item) => (
-              <div key={item._id} className="flex justify-between items-center">
-                <span className="text-gray-300">{item._id}</span>
-                <span className="font-mono text-yellow-200">{formatAmount(item.total)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Répartition par mode de paiement */}
-        <div className="bg-gray-800/60 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-yellow-300 mb-4">Par mode de paiement</h3>
-          <div className="space-y-3">
-            {byMethod.map((item) => (
-              <div key={item._id} className="flex justify-between items-center">
-                <span className="text-gray-300 capitalize">{item._id}</span>
-                <span className="font-mono text-yellow-200">{formatAmount(item.total)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Cartes pour crédit et versements */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          label="Payé par crédit"
+          value={formatAmount(totalPaidByCredit)}
+          bg="bg-indigo-600/20"
+          border="border-indigo-500"
+        />
+        <StatCard
+          label="Payé par espèces/autre"
+          value={formatAmount(totalPaidByCash)}
+          bg="bg-cyan-600/20"
+          border="border-cyan-500"
+        />
+        <StatCard
+          label="Total versements"
+          value={formatAmount(totalVersements)}
+          bg="bg-emerald-600/20"
+          border="border-emerald-500"
+        />
+        <StatCard
+          label="Total retraits"
+          value={formatAmount(totalRepayments)}
+          bg="bg-rose-600/20"
+          border="border-rose-500"
+        />
       </div>
 
-      {/* Répartition par statut (exemple de barre de progression) */}
+      {/* Carte pour le net crédit ajouté */}
+      <div className="grid grid-cols-1 mb-8">
+        <StatCard
+          label="Net crédit ajouté (versements - retraits)"
+          value={formatAmount(netCreditAdded)}
+          bg="bg-orange-600/20"
+          border="border-orange-500"
+        />
+      </div>
+
+      {/* Répartition par statut */}
       <div className="mt-8 bg-gray-800/60 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-yellow-300 mb-4">Répartition par statut</h3>
         <div className="space-y-3">
-          <StatusBar label="Payées" value={global.countPaid || 0} total={global.countAll} color="bg-green-500" />
-          <StatusBar label="En attente" value={global.countPending || 0} total={global.countAll} color="bg-yellow-500" />
-          <StatusBar label="En retard" value={global.countOverdue || 0} total={global.countAll} color="bg-red-500" />
-          <StatusBar label="Annulées" value={global.countCancelled || 0} total={global.countAll} color="bg-gray-500" />
+          <StatusBar label="Payées" value={byStatus.paid || 0} total={totalFees} color="bg-green-500" />
+          <StatusBar label="Partielles" value={byStatus.partial || 0} total={totalFees} color="bg-blue-500" />
+          <StatusBar label="En attente" value={byStatus.pending || 0} total={totalFees} color="bg-yellow-500" />
+          <StatusBar label="En retard" value={byStatus.overdue || 0} total={totalFees} color="bg-red-500" />
+          <StatusBar label="Annulées" value={byStatus.cancelled || 0} total={totalFees} color="bg-gray-500" />
         </div>
       </div>
     </div>

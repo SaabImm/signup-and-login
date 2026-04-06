@@ -23,7 +23,7 @@ export default function FormulaireCNOA() {
     dateOfBirth: "",
     sexe: "",
     registrationNumber: "",
-    startDate: "",
+    actvityStartDate: "",
     password: "",
     secondPassword: "",
   });
@@ -55,7 +55,8 @@ export default function FormulaireCNOA() {
           dateOfBirth: formData.dateOfBirth,
           sexe: formData.sexe,
           registrationNumber: formData.registrationNumber,
-          startDate: formData.startDate,
+          startDate: formData.actvityStartDate,
+          actvityStartDate: formData.actvityStartDate
         }),
       });
 
@@ -157,10 +158,10 @@ export default function FormulaireCNOA() {
             <label className="block text-sm text-yellow-300 mb-1">Date de début d'activité</label>
             <input
               type="date"
-              name="startDate"
+              name="actvityStartDate"
               min="1900-01-01"
               max={maxDate}
-              value={formData.startDate}
+              value={formData.actvityStartDate}
               onChange={handleChange}
               className="w-full p-3 bg-gray-800 text-yellow-300 placeholder-yellow-500 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-300 transition-all"
             />

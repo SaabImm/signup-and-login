@@ -38,7 +38,6 @@ function PaymentCard({ payment }) {
   );
 }
 
-// New component for credit transactions
 function CreditTransactionCard({ transaction }) {
   const date = new Date(transaction.date).toLocaleDateString('fr-FR');
   const isPositive = transaction.amount > 0;
@@ -49,7 +48,8 @@ function CreditTransactionCard({ transaction }) {
     deposit: 'Dépôt',
     used_for_fee: 'Utilisé pour cotisation',
     excess_from_fee: 'Remboursement (excedent)',
-    versement: 'Versement'
+    versement: 'Versement',
+    repayment: 'Retrait'
   };
 
   return (
@@ -95,13 +95,14 @@ export default function ProfilePage({ user }) {
   const [isUploading, setIsUploading] = useState(false);
   const [payments, setPayments] = useState([]);
   const [userFees, setUserFees] = useState([]);
-  const [creditTransactions, setCreditTransactions] = useState([]); // new state
+  const [creditTransactions, setCreditTransactions] = useState([]);
 
-  // Versement modal state
-  const [showVersementModal, setShowVersementModal] = useState(false);
-  const [versementAmount, setVersementAmount] = useState('');
-  const [versementMethod, setVersementMethod] = useState('cash');
-  const [versementNotes, setVersementNotes] = useState('');
+  // Transaction modal state (deposit or withdraw)
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [transactionType, setTransactionType] = useState('deposit'); // 'deposit' or 'withdraw'
+  const [transactionAmount, setTransactionAmount] = useState('');
+  const [transactionMethod, setTransactionMethod] = useState('cash');
+  const [transactionNotes, setTransactionNotes] = useState('');
 
   const targetUserId = user?._id || id || authData.user?._id;
   const isOwner = authData.user?._id === targetUserId;
@@ -112,7 +113,7 @@ export default function ProfilePage({ user }) {
     setTimeout(() => setPopup(null), duration);
   };
 
-  // --- File handlers (unchanged) ---
+  // --- File handlers ---
   const handleUpload = async (file) => {
     try {
       setIsUploading(true);
@@ -211,10 +212,9 @@ export default function ProfilePage({ user }) {
     }
   };
 
-  // --- Refresh user (credit) and fees after versement ---
+  // --- Refresh functions ---
   const refreshUserAndFees = async () => {
     try {
-      // Refresh user data (including credit)
       const userRes = await fetch(`${API_URL}/user/${targetUserId}`, {
         headers: { Authorization: `Bearer ${authData.token}` }
       });
@@ -224,9 +224,7 @@ export default function ProfilePage({ user }) {
         setDisplayUser(updatedUser);
         if (isOwner) setAuthData(prev => ({ ...prev, user: updatedUser }));
       }
-      // Refresh fees
       await refreshUserFees();
-      // Refresh credit transactions as well
       await fetchCreditTransactions();
     } catch (error) {
       console.error("Error refreshing user and fees:", error);
@@ -249,7 +247,6 @@ export default function ProfilePage({ user }) {
     }
   };
 
-  // Fetch credit transactions from backend
   const fetchCreditTransactions = async () => {
     try {
       const res = await fetch(`${API_URL}/credit/user/${targetUserId}`, {
@@ -266,23 +263,27 @@ export default function ProfilePage({ user }) {
     }
   };
 
-  // --- Versement handler ---
-  const handleVersement = async (amount, method, notes) => {
+  // --- Transaction handler (deposit or withdraw) ---
+  const handleTransaction = async (amount, method, notes, type) => {
+    const finalAmount = type === 'deposit' ? Math.abs(amount) : -Math.abs(amount);
     try {
       const res = await fetch(`${API_URL}/fee/versement`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authData.token}` },
-        body: JSON.stringify({ userId: targetUserId, amount, paymentMethod: method, notes })
+        body: JSON.stringify({ userId: targetUserId, amount: finalAmount, paymentMethod: method, notes })
       });
       const data = await res.json();
       if (res.ok) {
-        handlePopup('success', `${data.usedForFees} DA utilisé pour les cotisations, ${data.creditAdded} DA ajoutés au crédit.`);
+        if (type === 'deposit') {
+          handlePopup('success', `${data.usedForFees} DA utilisé pour les cotisations, ${data.creditAdded} DA ajoutés au crédit.`);
+        } else {
+          handlePopup('success', `Retrait de ${Math.abs(finalAmount)} DA effectué. Nouveau crédit : ${data.newCreditBalance} DA.`);
+        }
         await refreshUserAndFees();
-        setShowVersementModal(false);
-        // Reset form
-        setVersementAmount('');
-        setVersementMethod('cash');
-        setVersementNotes('');
+        setShowTransactionModal(false);
+        setTransactionAmount('');
+        setTransactionMethod('cash');
+        setTransactionNotes('');
       } else {
         handlePopup('error', data.error);
       }
@@ -292,7 +293,7 @@ export default function ProfilePage({ user }) {
     }
   };
 
-  // --- Data fetching ---
+  // --- Initial data fetching ---
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -341,7 +342,6 @@ export default function ProfilePage({ user }) {
           setUserFees(feesData.cotisations);
         }
 
-        // Fetch credit transactions
         await fetchCreditTransactions();
 
       } catch (error) {
@@ -445,7 +445,7 @@ export default function ProfilePage({ user }) {
             </div>
           )}
 
-          {/* Credit & Debt Card - with Versement Button inside */}
+          {/* Credit & Debt Card with Deposit/Withdraw buttons */}
           <div className="w-2/4 mx-auto mt-6 bg-blue-900/30 border border-blue-400/30 rounded-xl p-4">
             <div className="flex justify-between items-center">
               <span className="text-blue-300 font-medium">Crédit disponible :</span>
@@ -458,12 +458,24 @@ export default function ProfilePage({ user }) {
               <span className="text-blue-200 font-mono text-xl">{totalDebt} DA</span>
             </div>
 
-            <div className="w-2/4 mx-auto mt-3 flex justify-center">
+            <div className="flex gap-3 w-full mt-3 justify-center">
               <button
-                onClick={() => setShowVersementModal(true)}
+                onClick={() => {
+                  setTransactionType('deposit');
+                  setShowTransactionModal(true);
+                }}
                 className="px-6 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition shadow-md"
               >
-                + Effectuer un versement
+                + Versement
+              </button>
+              <button
+                onClick={() => {
+                  setTransactionType('withdraw');
+                  setShowTransactionModal(true);
+                }}
+                className="px-6 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition shadow-md"
+              >
+                - Retrait
               </button>
             </div>
           </div>
@@ -540,7 +552,7 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* Credit Transactions (new section) */}
+        {/* Credit Transactions */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-blue-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Historique des crédits" textColor="text-blue-300" />
@@ -557,22 +569,24 @@ export default function ProfilePage({ user }) {
         </div>
       </div>
 
-      {/* Versement Modal */}
-      {showVersementModal && (
+      {/* Transaction Modal (deposit or withdraw) */}
+      {showTransactionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-gray-800 rounded-xl p-6 w-96 border border-yellow-400/30 shadow-2xl">
-            <h3 className="text-xl font-bold text-yellow-300 mb-4">Versement</h3>
+            <h3 className="text-xl font-bold text-yellow-300 mb-4">
+              {transactionType === 'deposit' ? 'Versement' : 'Retrait de crédit'}
+            </h3>
             <div className="space-y-4">
               <input
                 type="number"
                 placeholder="Montant (DA)"
-                value={versementAmount}
-                onChange={(e) => setVersementAmount(e.target.value)}
+                value={transactionAmount}
+                onChange={(e) => setTransactionAmount(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-900 rounded text-white border border-gray-700 focus:outline-none focus:border-yellow-400"
               />
               <select
-                value={versementMethod}
-                onChange={(e) => setVersementMethod(e.target.value)}
+                value={transactionMethod}
+                onChange={(e) => setTransactionMethod(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-900 rounded text-white border border-gray-700 focus:outline-none focus:border-yellow-400"
               >
                 <option value="cash">Espèces</option>
@@ -583,26 +597,30 @@ export default function ProfilePage({ user }) {
               </select>
               <textarea
                 placeholder="Notes (optionnel)"
-                value={versementNotes}
-                onChange={(e) => setVersementNotes(e.target.value)}
+                value={transactionNotes}
+                onChange={(e) => setTransactionNotes(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-900 rounded text-white border border-gray-700 focus:outline-none focus:border-yellow-400"
                 rows="2"
               />
               <div className="flex justify-end gap-2 mt-4">
                 <button
-                  onClick={() => setShowVersementModal(false)}
+                  onClick={() => setShowTransactionModal(false)}
                   className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-500 transition text-white"
                 >
                   Annuler
                 </button>
                 <button
                   onClick={() => {
-                    const amountNum = parseFloat(versementAmount);
+                    const amountNum = parseFloat(transactionAmount);
                     if (isNaN(amountNum) || amountNum <= 0) {
-                      handlePopup('error', 'Montant invalide');
+                      handlePopup('error', 'Montant invalide (doit être positif)');
                       return;
                     }
-                    handleVersement(amountNum, versementMethod, versementNotes);
+                    if (transactionType === 'withdraw' && amountNum > displayUser.credit) {
+                      handlePopup('error', 'Crédit insuffisant');
+                      return;
+                    }
+                    handleTransaction(amountNum, transactionMethod, transactionNotes, transactionType);
                   }}
                   className="px-4 py-2 bg-green-600 rounded hover:bg-green-500 transition text-white"
                 >
