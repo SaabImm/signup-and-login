@@ -80,7 +80,7 @@ export default function App() {
 
 
         <Route path="delete/:id" element={<DeleteItem mode='user' />} />
-        <Route path="delete/fee/:id" element={<DeleteItem mode='cotisation' />} />
+        <Route path="cancel/fee/:id" element={<DeleteItem mode='cotisation' />} />
         <Route path="adminUser/:id" element={<AdminUserView />} />
         <Route path="feeStats" element={<FeeStats />} />
         <Route path="userStats" element={<UserStats />} />

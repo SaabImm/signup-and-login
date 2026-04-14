@@ -17,13 +17,15 @@ export default function DeleteItem({ mode }) { // mode = "user" ou "cotisation"
   const config = {
     user: {
       endpoint: `${API_URL}/user/${id}`,
+      method : 'DELETE',
       redirect: "/dash/allUsers",
       successMsg: "✅ Utilisateur supprimé avec succès.",
       confirmMsg: "Êtes-vous sûr de vouloir supprimer cet utilisateur ?",
       title: "Suppression d'utilisateur"
     },
     cotisation: {
-      endpoint: `${API_URL}/fee/${id}`,
+      endpoint: `${API_URL}/fee/cancel/${id}`,
+      method : 'PATCH',
       redirect: "/dash/allCotisations",
       successMsg: "✅ Cotisation annulée avec succès.",
       confirmMsg: "Êtes-vous sûr de vouloir annuler cette cotisation ?",
@@ -39,7 +41,7 @@ export default function DeleteItem({ mode }) { // mode = "user" ou "cotisation"
       const response = await fetchWithRefresh(
         current.endpoint,
         {
-          method: "DELETE",
+          method: current.method,
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authData.token}`,

@@ -41,11 +41,11 @@ export default function CreateBulkCotisation() {
           data.fields.forEach(field => {
             if (field === 'year') initial[field] = new Date().getFullYear();
             else if (field === 'dueDate') initial[field] = '';
+            else if (field === 'penaltyConfig.type') initial[field] = 'none';
+            else if (field === 'penaltyConfig.rate') initial[field] = 0;
+            else if (field === 'penaltyConfig.frequency') initial[field] = 'once';
             else initial[field] = '';
           });
-          // Default values for penalty fields
-          initial['penaltyConfig.rate'] = 0;
-          initial['penaltyConfig.frequency'] = 'once';
           setCotisationFields(initial);
         } else {
           console.error('Erreur chargement des champs créables');
@@ -57,12 +57,10 @@ export default function CreateBulkCotisation() {
     fetchCreatableFields();
   }, [authData]);
 
-  // Helper to know if penalty fields should be disabled
   const isPenaltyDisabled = () => {
     return cotisationFields['penaltyConfig.type'] === 'none';
   };
 
-  // Reset penalty fields when type becomes 'none'
   useEffect(() => {
     if (isPenaltyDisabled()) {
       setCotisationFields(prev => ({
@@ -89,7 +87,6 @@ export default function CreateBulkCotisation() {
     setMessage('');
     setResult(null);
 
-    // Transformer les clés avec points en objets imbriqués
     const nested = {};
     Object.keys(cotisationFields).forEach(key => {
       if (key.includes('.')) {
@@ -125,7 +122,7 @@ export default function CreateBulkCotisation() {
       const data = await response.json();
       if (response.ok) {
         setResult(data);
-        setMessage(`✅ ${data.count} cotisation(s) créée(s)`);
+        setMessage(`✅ Opération terminée : ${data.created} cotisation(s) créée(s)`);
       } else {
         setMessage(data.message || '❌ Erreur lors de la création');
       }
@@ -284,11 +281,18 @@ export default function CreateBulkCotisation() {
           )}
 
           {result && (
-            <div className="p-4 bg-green-600/20 border border-green-500 rounded-lg">
-              <p className="text-green-300">{result.count} cotisation(s) créée(s).</p>
+            <div className="p-4 bg-green-600/20 border border-green-500 rounded-lg space-y-1">
+              <p className="text-green-300">✅ {result.created} cotisation(s) créée(s)</p>
               {result.skipped > 0 && (
-                <p className="text-yellow-300">{result.skipped} existante(s) ignorée(s).</p>
+                <p className="text-yellow-300">⚠️ {result.skipped} utilisateur(s) avec une cotisation déjà existante (active) ignoré(s)</p>
               )}
+              {result.replacedCancelled > 0 && (
+                <p className="text-blue-300">🔄 {result.replacedCancelled} cotisation(s) annulée(s) remplacée(s)</p>
+              )}
+              {result.startDateSkipped > 0 && (
+                <p className="text-orange-300">📅 {result.startDateSkipped} utilisateur(s) exclus(s) car leur date de début est postérieure à la date d'échéance</p>
+              )}
+              <p className="text-gray-400 text-sm">Total utilisateurs concernés : {result.total}</p>
             </div>
           )}
 

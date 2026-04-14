@@ -114,7 +114,7 @@ export default function VersionForm({
             <div key={idx} className="border border-gray-700 rounded-lg p-4 mb-4">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="text-yellow-300 font-medium">{op.operation || 'Nouvelle opération'}</h3>
-                <button onClick={() => deleteOperation(idx)} className="text-red-400 hover:text-red-300">Supprimer</button>
+                <button onClick={() => deleteOperation(idx)} type="button" className="text-red-400 hover:text-red-300">Supprimer</button>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

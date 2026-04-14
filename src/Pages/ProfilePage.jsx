@@ -1,91 +1,21 @@
 import Title from '../Components/Title';
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import { UserContext } from "../Context/dataCont";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import sabAvatar from '../assets/SabrinaAvatar.jpg';
 import FileCard from '../Components/Cards/FileCrad';
 import CotisationCard from '../Components/Cards/CotisationCard';
 import AddFileCard from '../Components/Cards/AddFileCard';
+import CreditTransactionCard from '../Components/Cards/CreditTransactionCard';
+import PaymentCard from '../Components/Cards/PayementCard';
 
 const API_URL = import.meta.env.VITE_API_URL;
-
-function PaymentCard({ payment }) {
-  const date = new Date(payment.date).toLocaleDateString('fr-FR');
-  return (
-    <div className="bg-gray-800/60 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-4 shadow-lg">
-      <div className="flex justify-between items-start mb-2">
-        <span className="text-yellow-300 font-medium">Paiement</span>
-        <span className="text-xs text-gray-400">{date}</span>
-      </div>
-      <div className="space-y-1 text-sm">
-        <div className="flex justify-between">
-          <span className="text-gray-400">Montant :</span>
-          <span className="font-mono text-green-400">{payment.amount} DA</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-400">Mode :</span>
-          <span className="capitalize">{payment.type}</span>
-        </div>
-        {payment.fromCredit && (
-          <div className="text-blue-400 text-xs">Payé par crédit</div>
-        )}
-        {payment.notes && (
-          <div className="text-gray-500 text-xs mt-1">{payment.notes}</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function CreditTransactionCard({ transaction }) {
-  const date = new Date(transaction.date).toLocaleDateString('fr-FR');
-  const isPositive = transaction.amount > 0;
-  const amountColor = isPositive ? 'text-green-400' : 'text-red-400';
-  const amountPrefix = isPositive ? '+' : '';
-
-  const typeLabels = {
-    deposit: 'Dépôt',
-    used_for_fee: 'Utilisé pour cotisation',
-    excess_from_fee: 'Remboursement (excedent)',
-    versement: 'Versement',
-    repayment: 'Retrait'
-  };
-
-  return (
-    <div className="bg-gray-800/60 backdrop-blur-sm border border-blue-400/20 rounded-xl p-4 shadow-lg">
-      <div className="flex justify-between items-start mb-2">
-        <span className="text-blue-300 font-medium">Crédit</span>
-        <span className="text-xs text-gray-400">{date}</span>
-      </div>
-      <div className="space-y-1 text-sm">
-        <div className="flex justify-between">
-          <span className="text-gray-400">Montant :</span>
-          <span className={`font-mono ${amountColor}`}>
-            {amountPrefix}{transaction.amount} DA
-          </span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-gray-400">Type :</span>
-          <span className="capitalize">{typeLabels[transaction.type] || transaction.type}</span>
-        </div>
-        {transaction.paymentMethod && (
-          <div className="flex justify-between">
-            <span className="text-gray-400">Mode :</span>
-            <span className="capitalize">{transaction.paymentMethod}</span>
-          </div>
-        )}
-        {transaction.notes && (
-          <div className="text-gray-500 text-xs mt-1">{transaction.notes}</div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function ProfilePage({ user }) {
   const { authData, setAuthData } = useContext(UserContext);
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [displayUser, setDisplayUser] = useState(user || authData.user);
   const [permissions, setPermissions] = useState(null);
@@ -97,38 +27,49 @@ export default function ProfilePage({ user }) {
   const [userFees, setUserFees] = useState([]);
   const [creditTransactions, setCreditTransactions] = useState([]);
 
-  // Transaction modal state (deposit or withdraw)
   const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [transactionType, setTransactionType] = useState('deposit'); // 'deposit' or 'withdraw'
+  const [transactionType, setTransactionType] = useState('deposit');
   const [transactionAmount, setTransactionAmount] = useState('');
   const [transactionMethod, setTransactionMethod] = useState('cash');
   const [transactionNotes, setTransactionNotes] = useState('');
 
+  // Menu state
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
   const targetUserId = user?._id || id || authData.user?._id;
   const isOwner = authData.user?._id === targetUserId;
+  const isAdmin = authData.user?.role === 'admin' || authData.user?.role === 'super_admin';
 
-  // --- Popup handler ---
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handlePopup = (type, message, duration = 3000) => {
     setPopup({ type, message });
     setTimeout(() => setPopup(null), duration);
   };
 
-  // --- File handlers ---
+  // ---------- File handlers  ----------
   const handleUpload = async (file) => {
     try {
       setIsUploading(true);
       const uploadData = new FormData();
       uploadData.append("file", file);
       uploadData.append("folder", "uploads");
-
       const response = await fetch(`${API_URL}/upload/${displayUser._id}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${authData.token}` },
         body: uploadData,
       });
-
       const data = await response.json();
-
       if (response.status === 413) {
         handlePopup("error", data.message || "File is too large");
         return;
@@ -137,10 +78,8 @@ export default function ProfilePage({ user }) {
         handlePopup("error", data.message || "Upload failed");
         return;
       }
-
       if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
       else setDisplayUser(data.user);
-
       handlePopup("success", "File uploaded successfully ✅");
     } catch (err) {
       console.error(err);
@@ -156,15 +95,12 @@ export default function ProfilePage({ user }) {
       const uploadData = new FormData();
       uploadData.append("file", newFile);
       uploadData.append("folder", "uploads");
-
       const response = await fetch(`${API_URL}/upload/${file._id}`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${authData.token}` },
         body: uploadData,
       });
-
       const data = await response.json();
-
       if (response.status === 413) {
         handlePopup("error", data.message || "File is too large");
         return;
@@ -173,10 +109,8 @@ export default function ProfilePage({ user }) {
         handlePopup("error", data.message || "Replace failed");
         return;
       }
-
       if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
       else setDisplayUser(data.user);
-
       handlePopup("success", "File replaced successfully ✅");
     } catch (err) {
       console.error(err);
@@ -194,15 +128,12 @@ export default function ProfilePage({ user }) {
         headers: { Authorization: `Bearer ${authData.token}` },
       });
       const data = await response.json();
-
       if (!response.ok) {
         handlePopup("error", data.message || "Delete failed");
         return;
       }
-
       if (isOwner) setAuthData(prev => ({ token: data.token || prev.token, user: data.user || prev.user }));
       else setDisplayUser(data.user);
-
       handlePopup("success", "File deleted successfully ✅");
     } catch (err) {
       console.error(err);
@@ -212,7 +143,7 @@ export default function ProfilePage({ user }) {
     }
   };
 
-  // --- Refresh functions ---
+  // ---------- Refresh functions ----------
   const refreshUserAndFees = async () => {
     try {
       const userRes = await fetch(`${API_URL}/user/${targetUserId}`, {
@@ -263,7 +194,7 @@ export default function ProfilePage({ user }) {
     }
   };
 
-  // --- Transaction handler (deposit or withdraw) ---
+  // ---------- Transaction handler (deposit / withdraw) ----------
   const handleTransaction = async (amount, method, notes, type) => {
     const finalAmount = type === 'deposit' ? Math.abs(amount) : -Math.abs(amount);
     try {
@@ -293,12 +224,35 @@ export default function ProfilePage({ user }) {
     }
   };
 
-  // --- Initial data fetching ---
+  // ---------- User actions ---------- 
+  const handleEditUser = () => {
+    navigate(`/auth/update/${targetUserId}`); // adjust route as needed
+  };
+
+  const handleValidateUser = async () => {
+    try {
+      const response = await fetch(`${API_URL}/user/validate/${targetUserId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${authData.token}` }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        handlePopup('success', 'Utilisateur validé avec succès');
+        await refreshUserAndFees(); // refresh to show updated verification status
+      } else {
+        handlePopup('error', data.message || 'Erreur lors de la validation');
+      }
+    } catch (err) {
+      console.error(err);
+      handlePopup('error', 'Erreur réseau');
+    }
+  };
+
+  // ---------- Initial data fetch ----------
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
         let userData = user;
         if (!userData && id) {
           const userRes = await fetch(`${API_URL}/user/${id}`, {
@@ -343,7 +297,6 @@ export default function ProfilePage({ user }) {
         }
 
         await fetchCreditTransactions();
-
       } catch (error) {
         console.error("Error fetching data:", error);
         handlePopup("error", "Erreur lors du chargement des données");
@@ -351,10 +304,7 @@ export default function ProfilePage({ user }) {
         setLoading(false);
       }
     };
-
-    if (authData?.token && targetUserId) {
-      fetchData();
-    }
+    if (authData?.token && targetUserId) fetchData();
   }, [id, user, authData, targetUserId]);
 
   const totalDebt = userFees.reduce((sum, fee) => {
@@ -376,7 +326,7 @@ export default function ProfilePage({ user }) {
     ? "bg-slate-200/20 text-slate-100 border-slate-300/30"
     : "bg-yellow-400/20 text-yellow-300 border-yellow-400/40";
 
-  const verificationText = displayUser?.isAdminVerified ? "Validated" : "Pending Validation";
+  const verificationText = displayUser?.isAdminVerified ? "Validé" : "En attente de validation";
 
   if (loading) {
     return (
@@ -389,10 +339,12 @@ export default function ProfilePage({ user }) {
   const visibleFields = permissions?.fields || [];
   const isVisible = (fieldName) => visibleFields.includes(fieldName);
 
+  // Only admin or the user themselves can see the menu (if owner, you can still edit/validate? Adjust as needed)
+  const showMenu = isAdmin || isOwner;
+
   return (
     <>
       <div className="min-h-screen bg-gray-900 pb-16 relative">
-
         {/* Spinner Overlay */}
         {isUploading && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/30">
@@ -439,13 +391,73 @@ export default function ProfilePage({ user }) {
               </span>
             </div>
           </div>
+
+          {/* Three-dots menu */}
+          {showMenu && (
+            <div className="absolute top-6 right-6" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="text-gray-400 hover:text-yellow-300 text-2xl leading-none focus:outline-none"
+              >
+                ⋮
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-10">
+                  <ul className="py-1 text-sm text-gray-300">
+                    <li
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setTransactionType('deposit');
+                        setShowTransactionModal(true);
+                      }}
+                      className="px-4 py-2 hover:bg-green-600 hover:text-white cursor-pointer"
+                    >
+                      + Versement
+                    </li>
+                    <li
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setTransactionType('withdraw');
+                        setShowTransactionModal(true);
+                      }}
+                      className="px-4 py-2 hover:bg-red-600 hover:text-white cursor-pointer"
+                    >
+                      - Retrait
+                    </li>
+                    <li
+                      onClick={() => {
+                        setMenuOpen(false);
+                        handleEditUser();
+                      }}
+                      className="px-4 py-2 hover:bg-yellow-400 hover:text-gray-900 cursor-pointer"
+                    >
+                      Modifier l'utilisateur
+                    </li>
+                    {!displayUser?.isAdminVerified && isAdmin && (
+                      <li
+                        onClick={() => {
+                          setMenuOpen(false);
+                          handleValidateUser();
+                        }}
+                        className="px-4 py-2 hover:bg-blue-600 hover:text-white cursor-pointer"
+                      >
+                        Valider l'utilisateur
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ADMIN ACCESS badge (already present) */}
           {isVisible('role') && displayUser?.role === "admin" && (
             <div className="absolute top-6 right-6 bg-yellow-300/10 px-4 py-1 rounded-full text-sm shadow-md text-yellow-200 border border-yellow-300/20">
               ADMIN ACCESS
             </div>
           )}
 
-          {/* Credit & Debt Card with Deposit/Withdraw buttons */}
+          {/* Credit & Debt Card (without the two buttons) */}
           <div className="w-2/4 mx-auto mt-6 bg-blue-900/30 border border-blue-400/30 rounded-xl p-4">
             <div className="flex justify-between items-center">
               <span className="text-blue-300 font-medium">Crédit disponible :</span>
@@ -457,31 +469,10 @@ export default function ProfilePage({ user }) {
               <span className="text-blue-300 font-medium">Créances :</span>
               <span className="text-blue-200 font-mono text-xl">{totalDebt} DA</span>
             </div>
-
-            <div className="flex gap-3 w-full mt-3 justify-center">
-              <button
-                onClick={() => {
-                  setTransactionType('deposit');
-                  setShowTransactionModal(true);
-                }}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition shadow-md"
-              >
-                + Versement
-              </button>
-              <button
-                onClick={() => {
-                  setTransactionType('withdraw');
-                  setShowTransactionModal(true);
-                }}
-                className="px-6 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition shadow-md"
-              >
-                - Retrait
-              </button>
-            </div>
           </div>
         </div>
 
-        {/* Personal Details */}
+        {/* Personal Details (unchanged) */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Personal Details" textColor="text-yellow-300" />
@@ -504,7 +495,7 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* Files */}
+        {/* Files (unchanged) */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Files" textColor="text-yellow-300" />
@@ -517,7 +508,7 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* Cotisations */}
+        {/* Cotisations (unchanged) */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Cotisations" textColor="text-yellow-300" />
@@ -538,21 +529,23 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* Payments */}
+        {/* Payments (unchanged) */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Historique des paiements" textColor="text-yellow-300" />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {payments.length > 0 ? (
-              payments.map((payment) => <PaymentCard key={payment._id} payment={payment} />)
+              payments.map((payment) => (
+                <PaymentCard key={payment._id} payment={payment} handlePopup={handlePopup} />
+              ))
             ) : (
               <p className="text-gray-400 col-span-full text-center py-8">Aucun paiement enregistré.</p>
             )}
           </div>
         </div>
 
-        {/* Credit Transactions */}
+        {/* Credit Transactions (unchanged) */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-blue-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Historique des crédits" textColor="text-blue-300" />
@@ -560,7 +553,7 @@ export default function ProfilePage({ user }) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {creditTransactions.length > 0 ? (
               creditTransactions.map((tx) => (
-                <CreditTransactionCard key={tx._id} transaction={tx} />
+                <CreditTransactionCard key={tx._id} transaction={tx} handlePopup={handlePopup} />
               ))
             ) : (
               <p className="text-gray-400 col-span-full text-center py-8">Aucune transaction de crédit trouvée.</p>
@@ -569,7 +562,7 @@ export default function ProfilePage({ user }) {
         </div>
       </div>
 
-      {/* Transaction Modal (deposit or withdraw) */}
+      {/* Transaction Modal (deposit/withdraw) – unchanged */}
       {showTransactionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-gray-800 rounded-xl p-6 w-96 border border-yellow-400/30 shadow-2xl">

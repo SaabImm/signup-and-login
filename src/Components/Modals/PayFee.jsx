@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { fetchWithRefresh } from "../../../Components/api";
+import { fetchWithRefresh } from "../api";
 
 export default function MarkFeePaidModal({
   cotisation,
@@ -11,8 +11,12 @@ export default function MarkFeePaidModal({
 }) {
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const totalDue = cotisation.amount + (cotisation.penalty || 0);
-  const alreadyPaid = cotisation.computed?.totalPaid || 0;
+  // Use computed data (dynamic penalty)
+  const computed = cotisation.computed || {};
+  const totalDue = computed.totalDue || cotisation.amount;
+  const alreadyPaid = computed.totalPaid || 0;
+  const remainingDue = computed.remaining || totalDue;
+  const penalty = computed.penalty || 0;
   const userCredit = cotisation.user?.credit || 0;
 
   const [paymentDate, setPaymentDate] = useState(
@@ -82,13 +86,16 @@ export default function MarkFeePaidModal({
           {alreadyPaid > 0 ? "Modifier le paiement" : "Enregistrer un paiement"}
         </h2>
         <p className="text-gray-300 mb-2">Cotisation {cotisation.year}</p>
-        <p className="text-gray-300 mb-1">Montant : {cotisation.amount} DA</p>
-        {cotisation.penalty > 0 && (
-          <p className="text-red-400 text-sm mb-1">Pénalité : {cotisation.penalty} DA</p>
+        <p className="text-gray-300 mb-1">Montant de base : {cotisation.amount} DA</p>
+        {penalty > 0 && (
+          <p className="text-red-400 text-sm mb-1">Pénalité : {penalty} DA</p>
         )}
         <p className="text-yellow-300 font-semibold mb-2">Total dû : {totalDue} DA</p>
         {alreadyPaid > 0 && (
           <p className="text-green-400 text-sm mb-4">Déjà payé : {alreadyPaid} DA</p>
+        )}
+        {remainingDue > 0 && alreadyPaid > 0 && (
+          <p className="text-blue-400 text-sm mb-4">Reste à payer : {remainingDue} DA</p>
         )}
 
         {userCredit > 0 && (
@@ -129,13 +136,13 @@ export default function MarkFeePaidModal({
                   <input
                     type="number"
                     value={creditToUse}
-                    onChange={(e) => setCreditToUse(Math.min(Number(e.target.value), userCredit))}
+                    onChange={(e) => setCreditToUse(Math.min(Number(e.target.value), userCredit, remainingDue))}
                     min="0"
-                    max={userCredit}
+                    max={Math.min(userCredit, remainingDue)}
                     step="1"
                     className="w-full p-3 rounded-lg bg-gray-900/60 border border-gray-700 text-gray-200 focus:ring-2 focus:ring-yellow-400"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Maximum : {userCredit} DA</p>
+                  <p className="text-xs text-gray-400 mt-1">Maximum : {Math.min(userCredit, remainingDue)} DA</p>
                 </div>
               )}
             </div>

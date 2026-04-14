@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../../Context/dataCont";
-import MarkFeePaidModal from "../../Pages/DashBoard/Cotisations/PayFee";
+import MarkFeePaidModal from "../Modals/PayFee";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function CotisationCard({ cotisation, onCotisationUpdated, isOwner }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -26,15 +28,12 @@ export default function CotisationCard({ cotisation, onCotisationUpdated, isOwne
   const computed = cotisation.computed || {};
   const status = computed.status || "pending";
   const totalPaid = computed.totalPaid || 0;
-  const totalDue = computed.totalDue || cotisation.amount + (cotisation.penalty || 0);
+  const totalDue = computed.totalDue || cotisation.amount;
   const remaining = computed.remaining || totalDue;
-
-  // For backward compatibility: if paymentDate is not in computed, we might not have it
-  // In the new model, paymentDate is not stored on cotisation; it's in payments.
-  // So we won't display a single payment date. We can remove that line or show nothing.
+  const penalty = computed.penalty || 0;
   const lastPaymentDate = computed.lastPaymentDate
     ? new Date(computed.lastPaymentDate).toLocaleDateString("fr-FR")
-    : "Non payé";
+    : null;
 
   const statusColors = {
     pending: "bg-yellow-200/20 text-yellow-300 border-yellow-400/40",
@@ -57,14 +56,44 @@ export default function CotisationCard({ cotisation, onCotisationUpdated, isOwne
     setMenuOpen(false);
   };
 
-  const handleDelete = () => {
-    navigate(`/dash/delete/fee/${cotisation._id}`);
+  const handleCancel = async () => {
+    try {
+      const response = await fetch(`${API_URL}/fee/cancel/${cotisation._id}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${authData.token}` },
+      });
+      if (response.ok) {
+        if (onCotisationUpdated) onCotisationUpdated();
+      } else {
+        const error = await response.json();
+        console.error(error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+    setMenuOpen(false);
+  };
+
+  const handleReactivate = async () => {
+    try {
+      const response = await fetch(`${API_URL}/fee/reactivate/${cotisation._id}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${authData.token}` },
+      });
+      if (response.ok) {
+        if (onCotisationUpdated) onCotisationUpdated();
+      } else {
+        const error = await response.json();
+        console.error(error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
     setMenuOpen(false);
   };
 
   return (
     <div className="relative bg-gray-800/60 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-5 shadow-lg hover:shadow-xl transition-all duration-300">
-
       {/* Header */}
       <div className="flex justify-between items-start mb-3">
         <h3 className="text-lg font-semibold text-yellow-300">
@@ -96,18 +125,21 @@ export default function CotisationCard({ cotisation, onCotisationUpdated, isOwne
                     >
                       Modifier
                     </li>
-                    <li
-                      onClick={() => setShowPaidModal(true)}
-                      className="px-4 py-2 hover:bg-green-600 hover:text-white cursor-pointer"
-                    >
-                      Paiement
-                    </li>
-                    <li
-                      onClick={handleDelete}
-                      className="px-4 py-2 hover:bg-red-500 hover:text-white cursor-pointer"
-                    >
-                      Annuler
-                    </li>
+                    {status === 'cancelled' ? (
+                      <li
+                        onClick={handleReactivate}
+                        className="px-4 py-2 hover:bg-green-600 hover:text-white cursor-pointer"
+                      >
+                        Réactiver
+                      </li>
+                    ) : (
+                      <li
+                        onClick={handleCancel}
+                        className="px-4 py-2 hover:bg-red-500 hover:text-white cursor-pointer"
+                      >
+                        Annuler
+                      </li>
+                    )}
                   </ul>
                 </div>
               )}
@@ -123,18 +155,17 @@ export default function CotisationCard({ cotisation, onCotisationUpdated, isOwne
           <span className="font-mono">{cotisation.amount} DA</span>
         </div>
 
-        {cotisation.penalty > 0 && (
-          <>
-            <div className="flex justify-between text-red-400">
-              <span>Pénalité :</span>
-              <span className="font-mono">{cotisation.penalty} DA</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Total dû :</span>
-              <span className="font-mono">{totalDue} DA</span>
-            </div>
-          </>
+        {penalty > 0 && (
+          <div className="flex justify-between text-red-400">
+            <span>Pénalité :</span>
+            <span className="font-mono">{penalty} DA</span>
+          </div>
         )}
+
+        <div className="flex justify-between">
+          <span className="text-gray-400">Total dû :</span>
+          <span className="font-mono">{totalDue} DA</span>
+        </div>
 
         {totalPaid > 0 && (
           <div className="flex justify-between text-green-400">
@@ -162,7 +193,6 @@ export default function CotisationCard({ cotisation, onCotisationUpdated, isOwne
           <span>{dueDate}</span>
         </div>
 
-        {/* Optional: remove paymentDate line if not needed */}
         {lastPaymentDate && (
           <div className="flex justify-between">
             <span className="text-gray-400">Dernier paiement :</span>

@@ -75,36 +75,7 @@ export default function AdminUserView() {
       </div>
 
       {/* ADMIN ACTIONS */}
-      <div className="max-w-5xl mx-auto mt-10">
-        <div className="bg-gray-800/70 backdrop-blur-xl border border-yellow-400/20 
-                        rounded-xl shadow-xl p-8 flex gap-6 justify-center">
 
-          {/* VALIDATE BUTTON */}
-          <button
-            onClick={handleValidate}
-            disabled={user.isAdminVerified || validating}
-            className={`px-8 py-3 rounded-lg font-semibold tracking-wide
-                        ${user.isAdminVerified ? "bg-green-500 text-gray-900" :
-                          validating ? "bg-yellow-400 text-gray-900" :
-                          "bg-yellow-500 text-gray-900"}
-                        hover:bg-yellow-400 transition-colors 
-                        shadow-[0_0_10px_rgba(255,200,80,0.4)]`}
-          >
-            {user.isAdminVerified ? "Validated" : validating ? "Pending…" : "Validate User"}
-          </button>
-
-          {/* EDIT BUTTON */}
-          <button
-            onClick={handleEdit}
-            className="px-8 py-3 rounded-lg font-semibold tracking-wide
-                      bg-gray-900 text-yellow-300 border border-yellow-300/40
-                      hover:bg-gray-800 transition-colors
-                      shadow-[0_0_10px_rgba(255,200,80,0.2)]"
-          >
-            Edit User
-          </button>
-        </div>
-      </div>
 
       {/* POPUP MESSAGE */}
       {showPopup && (
