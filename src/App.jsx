@@ -29,7 +29,12 @@ import PermissionManager from "./Pages/DashBoard/Permissions/PermissionConfig";
 import PermissionDetails from "./Pages/DashBoard/Permissions/getSchema";
 import NewVersion from "./Pages/DashBoard/Permissions/createVersion";
 import EditVersion from "./Pages/DashBoard/Permissions/EditVersion";
-
+import ValidationRequestDetail from "./Pages/DashBoard/Validations/ValidationRequestsDetail";
+import ValidationRequestsList from "./Pages/DashBoard/Validations/ValidationRequestsList";
+import ValidationSchemasList from "./Pages/DashBoard/Validations/ValidationSchemasAdmin";
+import NewValidationSchema from "./Pages/DashBoard/Validations/NewValidationSchema";
+import EditValidationSchema from "./Pages/DashBoard/Validations/EditValidationSchema";
+import ValidationSchemaVersions from "./Pages/DashBoard/Validations/ValidationSchemasVersions";
 export default function App() {
   return (
     <Routes>
@@ -69,7 +74,7 @@ export default function App() {
         <Route path="allUsers" element={<GetUsers mode="users" />} />
         <Route path="allMembers" element={<GetUsers mode="membres" />} />
         <Route path="allCotisations" element={<GetCotisations/>} />
-        <Route path="create" element={<CreateUser />} />
+        <Route path="createUser" element={<CreateUser/>} />
         <Route path="ajouterCotisation" element={<CreateBulkCotisation />} />
 
 
@@ -77,6 +82,13 @@ export default function App() {
         <Route path="permissions/:model/:version" element={<PermissionDetails />} />
         <Route path="permissions/new/:model" element={<NewVersion />} />
         <Route path="permissions/edit/:versionId" element={<EditVersion />} />
+
+        <Route path="validation/requests" element={<ValidationRequestsList />} />
+        <Route path="validation/requests/:id" element={<ValidationRequestDetail />} />
+        <Route path="validation/schemas" element={<ValidationSchemasList />} />
+        <Route path="validation/schemas/new" element={<NewValidationSchema />} />
+        <Route path="validation/schemas/:schemaId/edit" element={<EditValidationSchema />} />
+        <Route path="validation/schemas/:schemaId/versions" element={<ValidationSchemaVersions />} />
 
 
         <Route path="delete/:id" element={<DeleteItem mode='user' />} />

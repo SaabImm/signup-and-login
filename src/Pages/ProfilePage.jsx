@@ -450,13 +450,6 @@ export default function ProfilePage({ user }) {
             </div>
           )}
 
-          {/* ADMIN ACCESS badge (already present) */}
-          {isVisible('role') && displayUser?.role === "admin" && (
-            <div className="absolute top-6 right-6 bg-yellow-300/10 px-4 py-1 rounded-full text-sm shadow-md text-yellow-200 border border-yellow-300/20">
-              ADMIN ACCESS
-            </div>
-          )}
-
           {/* Credit & Debt Card (without the two buttons) */}
           <div className="w-2/4 mx-auto mt-6 bg-blue-900/30 border border-blue-400/30 rounded-xl p-4">
             <div className="flex justify-between items-center">
