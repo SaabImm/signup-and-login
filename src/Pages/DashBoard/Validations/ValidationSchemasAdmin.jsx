@@ -18,7 +18,6 @@ export default function ValidationSchemasList() {
       const url = `${API_URL}/validation/schemas?includeInactive=${showInactive}`;
       const res = await fetchWithRefresh(url, { method: 'GET' }, authData.token, setAuthData);
       const data = await res.json();
-      console.log(data)
       setSchemas(data.schemas || data);
     } catch (err) {
       console.error(err);
@@ -30,16 +29,6 @@ export default function ValidationSchemasList() {
   useEffect(() => {
     if (authData?.token) fetchSchemas();
   }, [authData?.token, showInactive]);
-
-  const handleDelete = async (id) => {
-    if (!confirm('Supprimer cette version ?')) return;
-    try {
-      await fetchWithRefresh(`${API_URL}/validation/schemas/${id}`, { method: 'DELETE' }, authData.token, setAuthData);
-      fetchSchemas();
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const handleRollback = async (schema) => {
     if (!confirm('Rollback to the previous active version? This will change the active schema.')) return;
@@ -71,21 +60,21 @@ export default function ValidationSchemasList() {
         <Title title="Schémas de validation" />
         <button
           onClick={() => navigate('/dash/validation/schemas/new')}
-          className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700"
+          className="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition"
         >
           + Nouveau schéma
         </button>
       </div>
 
       <div className="mb-4 flex justify-end">
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="checkbox"
             checked={showInactive}
             onChange={(e) => setShowInactive(e.target.checked)}
             className="w-4 h-4"
           />
-          Afficher les versions inactives
+          <span>Afficher les versions inactives</span>
         </label>
       </div>
 
@@ -93,7 +82,7 @@ export default function ValidationSchemasList() {
         {schemas.map(schema => (
           <div key={schema._id} className="bg-gray-800/60 border border-yellow-400/20 rounded-xl p-5 shadow-lg">
             <div className="flex justify-between items-start">
-              <div>
+              <div className="flex-1">
                 <h3 className="text-xl font-semibold">{schema.name}</h3>
                 <div className="text-sm text-gray-400 mt-1">
                   Cible : {schema.targetType} | v{schema.version} | Statut : {schema.isActive ? '✓ Actif' : '✗ Inactif'}
@@ -103,32 +92,32 @@ export default function ValidationSchemasList() {
                   {schema.steps?.length} étape(s)
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 ml-4">
                 {schema.isActive && schema.status !== 'flawed' && (
                   <button
                     onClick={() => handleRollback(schema)}
-                    className="px-3 py-1 bg-blue-600 rounded hover:bg-blue-700"
+                    className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition text-sm"
                   >
                     Rollback
                   </button>
                 )}
                 <button
                   onClick={() => navigate(`/dash/validation/schemas/${schema._id}/edit`)}
-                  className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-500"
+                  className="px-3 py-1 bg-gray-700 text-gray-200 rounded-md hover:bg-gray-600 transition text-sm"
                 >
                   Modifier
                 </button>
                 <button
                   onClick={() => navigate(`/dash/validation/schemas/${schema._id}/versions`)}
-                  className="px-3 py-1 bg-gray-600 rounded hover:bg-gray-500"
+                  className="px-3 py-1 bg-gray-700 text-gray-200 rounded-md hover:bg-gray-600 transition text-sm"
                 >
                   Versions
                 </button>
                 <button
-                  onClick={() => handleDelete(schema._id)}
-                  className="px-3 py-1 bg-red-600 rounded hover:bg-red-700"
+                  onClick={() => navigate(`/dash/validation/schemas/${schema._id}`)}
+                  className="px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition text-sm"
                 >
-                  Supprimer
+                  Détails
                 </button>
               </div>
             </div>

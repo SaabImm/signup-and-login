@@ -35,6 +35,8 @@ import ValidationSchemasList from "./Pages/DashBoard/Validations/ValidationSchem
 import NewValidationSchema from "./Pages/DashBoard/Validations/NewValidationSchema";
 import EditValidationSchema from "./Pages/DashBoard/Validations/EditValidationSchema";
 import ValidationSchemaVersions from "./Pages/DashBoard/Validations/ValidationSchemasVersions";
+import AllValidationRequests from "./Pages/DashBoard/Validations/allValidationRequests";
+import ValidationSchemaDetails from './Pages/DashBoard/Validations/ValidationSchemaDetails'
 export default function App() {
   return (
     <Routes>
@@ -84,11 +86,14 @@ export default function App() {
         <Route path="permissions/edit/:versionId" element={<EditVersion />} />
 
         <Route path="validation/requests" element={<ValidationRequestsList />} />
+        <Route path="validation/all-requests" element={<AllValidationRequests />} />
         <Route path="validation/requests/:id" element={<ValidationRequestDetail />} />
         <Route path="validation/schemas" element={<ValidationSchemasList />} />
         <Route path="validation/schemas/new" element={<NewValidationSchema />} />
         <Route path="validation/schemas/:schemaId/edit" element={<EditValidationSchema />} />
         <Route path="validation/schemas/:schemaId/versions" element={<ValidationSchemaVersions />} />
+        <Route path="validation/schemas/:schemaId" element={<ValidationSchemaDetails />} />
+
 
 
         <Route path="delete/:id" element={<DeleteItem mode='user' />} />

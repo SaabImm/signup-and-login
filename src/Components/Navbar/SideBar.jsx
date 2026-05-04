@@ -151,6 +151,7 @@ export default function SideBar() {
             )}
           </div>
 
+          {/* Validation dropdown – added "Toutes les demandes" for super admin */}
           <div>
             <button
               onClick={() => toggleDropdown(setValidationOpen, [setUsersOpen, setCotisationsOpen, setStatsOpen, setConfigOpen])}
@@ -168,6 +169,14 @@ export default function SideBar() {
                 >
                   Demandes à valider
                 </button>
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => handleNavigation("/dash/validation/all-requests")}
+                    className="block w-full text-left px-4 py-2 rounded-md text-sm hover:bg-gray-700 transition-colors"
+                  >
+                    Toutes les demandes
+                  </button>
+                )}
               </div>
             )}
           </div>

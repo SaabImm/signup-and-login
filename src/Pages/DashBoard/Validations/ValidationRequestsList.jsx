@@ -11,7 +11,7 @@ export default function ValidationRequestsList() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('pending');
+  const [filter, setFilter] = useState('all');
   const [popup, setPopup] = useState(null);
 
   const handlePopup = (type, message) => {

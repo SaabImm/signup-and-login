@@ -6,10 +6,33 @@ import { fetchWithRefresh } from '../../Components/api';
 const API_URL = import.meta.env.VITE_API_URL;
 
 const STEP_ROLES = ['user', 'moderator', 'admin', 'super_admin'];
-const REJECT_ACTIONS = ['reject_request', 'escalate', 'skip_step', 'notify_only', 'wait_for_another', 'cancel_request'];
+const REJECT_ACTIONS = ['reject_request', 'escalate', 'skip_step', 'notify_only', 'wait_for_another', 'cancel_request', 'go_back'];
 const TIMEOUT_ACTIONS = ['reject_step', 'cancel_request', 'escalate'];
+const FINAL_ACTIONS = ['setField', 'callService', 'sendEmail'];
 
-// Custom Multi‑Select component (dropdown with checkboxes)
+const CONDITION_TYPES = [
+  { value: 'file_exists', label: 'Fichier existe', params: { folder: '' } },
+  { value: 'file_missing', label: 'Fichier manquant', params: { folder: '' } },
+  { value: 'field_equals', label: 'Champ égal à', params: { field: '', value: '' } },
+  { value: 'field_exists', label: 'Champ existe', params: { field: '' } },
+  { value: 'payment_status', label: 'Statut de paiement', params: { feeType: 'annual', year: new Date().getFullYear(), status: 'paid' } },
+  { value: 'debt_zero', label: 'Dette nulle', params: {} }
+];
+
+const FEE_TYPES = [
+  { value: 'annual', label: 'Annuelle' },
+  { value: 'event', label: 'Événement' },
+  { value: 'training', label: 'Formation' },
+  { value: 'exceptional', label: 'Exceptionnelle' },
+  { value: 'other', label: 'Autre' }
+];
+
+const PAYMENT_STATUSES = [
+  { value: 'paid', label: 'Payée' },
+  { value: 'pending', label: 'En attente' },
+  { value: 'partial', label: 'Partielle' }
+];
+
 function MultiSelect({ options, value = [], onChange, placeholder }) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
@@ -63,7 +86,7 @@ function MultiSelect({ options, value = [], onChange, placeholder }) {
   );
 }
 
-export default function ValidationSchemaForm({ initialData, schemaId, onSuccess }) {
+export default function ValidationSchemaForm({ initialData, schemaId, onSuccess, allowedFields = null, fieldConfigs = {} }) {
   const { authData, setAuthData } = useContext(UserContext);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -75,10 +98,27 @@ export default function ValidationSchemaForm({ initialData, schemaId, onSuccess 
     description: initialData?.description || '',
     steps: initialData?.steps || [],
     globalTimeout: initialData?.globalTimeout || { duration: 0, action: 'reject' },
-    globalRejectAction: initialData?.globalRejectAction || 'reject_request',
-    globalEscalateToRole: initialData?.globalEscalateToRole || 'admin',
-    notificationConfig: initialData?.notificationConfig || { methods: { email: true, system: false } }
+    notificationConfig: initialData?.notificationConfig || { methods: { email: true, system: false } },
+    onApproval: {
+      action: initialData?.onApproval?.action || 'setField',
+      params: initialData?.onApproval?.params || {}
+    },
+    onRejection: {
+      action: initialData?.onRejection?.action || 'setField',
+      params: initialData?.onRejection?.params || {}
+    }
   });
+
+  // Local states for JSON argument textareas
+  const [approvalArgsText, setApprovalArgsText] = useState(JSON.stringify(formData.onApproval.params.args || []));
+  const [rejectionArgsText, setRejectionArgsText] = useState(JSON.stringify(formData.onRejection.params.args || []));
+
+  useEffect(() => {
+    setApprovalArgsText(JSON.stringify(formData.onApproval.params.args || []));
+  }, [formData.onApproval.params.args]);
+  useEffect(() => {
+    setRejectionArgsText(JSON.stringify(formData.onRejection.params.args || []));
+  }, [formData.onRejection.params.args]);
 
   const fetchUsersByRole = async (role) => {
     if (usersByRole[role]) return usersByRole[role];
@@ -98,45 +138,197 @@ export default function ValidationSchemaForm({ initialData, schemaId, onSuccess 
   };
 
   const addStep = () => {
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       steps: [
-        ...formData.steps,
+        ...prev.steps,
         {
           stepName: '',
           requiredRole: 'admin',
-          order: formData.steps.length + 1,
+          order: prev.steps.length + 1,
           required: true,
           allowedUserIds: [],
           timeout: { duration: 0, action: 'reject_step', escalateToRole: 'admin' },
           rejectAction: 'reject_request',
           escalateToRole: 'super_admin',
-          description: ''
+          description: '',
+          approveConditions: []
         }
       ]
-    });
+    }));
   };
 
   const updateStep = (index, field, value) => {
-    const newSteps = [...formData.steps];
-    if (field === 'timeout') {
-      newSteps[index].timeout = { ...newSteps[index].timeout, ...value };
-    } else {
-      newSteps[index] = { ...newSteps[index], [field]: value };
-    }
-    setFormData({ ...formData, steps: newSteps });
+    setFormData(prev => {
+      const newSteps = [...prev.steps];
+      if (field === 'timeout') {
+        newSteps[index] = { ...newSteps[index], timeout: { ...newSteps[index].timeout, ...value } };
+      } else if (field === 'approveConditions') {
+        newSteps[index] = { ...newSteps[index], approveConditions: value };
+      } else {
+        newSteps[index] = { ...newSteps[index], [field]: value };
+      }
+      return { ...prev, steps: newSteps };
+    });
   };
 
   const deleteStep = (index) => {
-    const newSteps = formData.steps.filter((_, i) => i !== index);
-    newSteps.forEach((step, idx) => (step.order = idx + 1));
-    setFormData({ ...formData, steps: newSteps });
+    setFormData(prev => {
+      const newSteps = prev.steps.filter((_, i) => i !== index);
+      newSteps.forEach((step, idx) => (step.order = idx + 1));
+      return { ...prev, steps: newSteps };
+    });
   };
 
   const handleRoleChange = async (index, newRole) => {
     updateStep(index, 'requiredRole', newRole);
     updateStep(index, 'allowedUserIds', []);
     await fetchUsersByRole(newRole);
+  };
+
+  const addCondition = (stepIndex) => {
+    const newCondition = { type: 'file_exists', params: { folder: '' } };
+    const currentConditions = formData.steps[stepIndex].approveConditions || [];
+    updateStep(stepIndex, 'approveConditions', [...currentConditions, newCondition]);
+  };
+
+  const updateCondition = (stepIndex, condIndex, field, value) => {
+    const step = formData.steps[stepIndex];
+    const conditions = [...(step.approveConditions || [])];
+    if (field === 'type') {
+      const typeDef = CONDITION_TYPES.find(t => t.value === value);
+      conditions[condIndex] = { type: value, params: typeDef ? { ...typeDef.params } : {} };
+    } else if (field === 'param') {
+      conditions[condIndex].params = { ...conditions[condIndex].params, ...value };
+    } else {
+      conditions[condIndex][field] = value;
+    }
+    updateStep(stepIndex, 'approveConditions', conditions);
+  };
+
+  const removeCondition = (stepIndex, condIndex) => {
+    const step = formData.steps[stepIndex];
+    const conditions = [...(step.approveConditions || [])];
+    conditions.splice(condIndex, 1);
+    updateStep(stepIndex, 'approveConditions', conditions);
+  };
+
+  const renderConditionParams = (condition, stepIdx, condIdx) => {
+    const { type, params } = condition;
+    switch (type) {
+      case 'file_exists':
+      case 'file_missing':
+        return (
+          <>
+            <label className="block text-xs text-gray-400 mb-1">Dossier</label>
+            <input
+              type="text"
+              value={params.folder || ''}
+              onChange={e => updateCondition(stepIdx, condIdx, 'param', { folder: e.target.value })}
+              className="w-full px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm"
+              placeholder="ex: id_documents"
+            />
+          </>
+        );
+      case 'field_equals':
+        return (
+          <>
+            <label className="block text-xs text-gray-400 mb-1">Nom du champ</label>
+            <input
+              type="text"
+              value={params.field || ''}
+              onChange={e => updateCondition(stepIdx, condIdx, 'param', { field: e.target.value })}
+              className="w-full px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm"
+              placeholder="ex: status"
+            />
+            <label className="block text-xs text-gray-400 mt-2 mb-1">Valeur</label>
+            <input
+              type="text"
+              value={params.value || ''}
+              onChange={e => updateCondition(stepIdx, condIdx, 'param', { value: e.target.value })}
+              className="w-full px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm"
+              placeholder="ex: active"
+            />
+          </>
+        );
+      case 'field_exists':
+        return (
+          <>
+            <label className="block text-xs text-gray-400 mb-1">Nom du champ</label>
+            <input
+              type="text"
+              value={params.field || ''}
+              onChange={e => updateCondition(stepIdx, condIdx, 'param', { field: e.target.value })}
+              className="w-full px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm"
+              placeholder="ex: registrationNumber"
+            />
+          </>
+        );
+      case 'payment_status':
+        return (
+          <>
+            <label className="block text-xs text-gray-400 mb-1">Type de cotisation</label>
+            <select
+              value={params.feeType || 'annual'}
+              onChange={e => updateCondition(stepIdx, condIdx, 'param', { feeType: e.target.value })}
+              className="w-full px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm"
+            >
+              {FEE_TYPES.map(ft => (
+                <option key={ft.value} value={ft.value}>{ft.label}</option>
+              ))}
+            </select>
+            <label className="block text-xs text-gray-400 mt-2 mb-1">Année</label>
+            <input
+              type="number"
+              value={params.year || new Date().getFullYear()}
+              onChange={e => updateCondition(stepIdx, condIdx, 'param', { year: parseInt(e.target.value) })}
+              className="w-full px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm"
+            />
+            <label className="block text-xs text-gray-400 mt-2 mb-1">Statut attendu</label>
+            <select
+              value={params.status || 'paid'}
+              onChange={e => updateCondition(stepIdx, condIdx, 'param', { status: e.target.value })}
+              className="w-full px-2 py-1 bg-gray-900 border border-gray-700 rounded text-sm"
+            >
+              {PAYMENT_STATUSES.map(ps => (
+                <option key={ps.value} value={ps.value}>{ps.label}</option>
+              ))}
+            </select>
+          </>
+        );
+      case 'debt_zero':
+        return <p className="text-xs text-gray-400">Aucune dette restante (vérifié automatiquement)</p>;
+      default:
+        return null;
+    }
+  };
+
+  const updateFinalAction = (type, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [type]: { ...prev[type], [field]: value }
+    }));
+  };
+
+  const updateFinalActionParam = (type, paramKey, paramValue) => {
+    setFormData(prev => ({
+      ...prev,
+      [type]: { ...prev[type], params: { ...prev[type].params, [paramKey]: paramValue } }
+    }));
+  };
+
+  const handleApprovalArgsBlur = () => {
+    try {
+      const parsed = JSON.parse(approvalArgsText);
+      if (Array.isArray(parsed)) updateFinalActionParam('onApproval', 'args', parsed);
+    } catch (e) { console.warn('Invalid JSON, keeping previous args'); }
+  };
+
+  const handleRejectionArgsBlur = () => {
+    try {
+      const parsed = JSON.parse(rejectionArgsText);
+      if (Array.isArray(parsed)) updateFinalActionParam('onRejection', 'args', parsed);
+    } catch (e) { console.warn('Invalid JSON, keeping previous args'); }
   };
 
   const handleSubmit = async (e) => {
@@ -165,13 +357,77 @@ export default function ValidationSchemaForm({ initialData, schemaId, onSuccess 
     const preFetch = async () => {
       const roles = new Set(formData.steps.map(s => s.requiredRole));
       for (const role of roles) {
-        if (role && !usersByRole[role]) {
-          await fetchUsersByRole(role);
-        }
+        if (role && !usersByRole[role]) await fetchUsersByRole(role);
       }
     };
     if (authData?.token && formData.steps.length) preFetch();
   }, [formData.steps, authData?.token]);
+
+  // Helper to check if a field should be rendered
+  const isFieldAllowed = (fieldName) => {
+    return allowedFields === null || allowedFields.includes(fieldName);
+  };
+
+  // Get field config (label) for a field
+  const getFieldLabel = (fieldName, defaultLabel) => {
+    return fieldConfigs[fieldName]?.label || defaultLabel;
+  };
+
+  // Render a simple input based on field type from config (if available)
+  const renderSimpleField = (fieldName, type, value, onChange, config = {}) => {
+    const label = getFieldLabel(fieldName, fieldName);
+    const required = config.validation?.required || false;
+    const min = config.validation?.min;
+    const max = config.validation?.max;
+    const options = config.validation?.options || [];
+
+    switch (type) {
+      case 'select':
+        return (
+          <div key={fieldName}>
+            <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
+            <select
+              value={value || ''}
+              onChange={onChange}
+              required={required}
+              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+            >
+              {options.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+        );
+      case 'textarea':
+        return (
+          <div key={fieldName}>
+            <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
+            <textarea
+              value={value || ''}
+              onChange={onChange}
+              required={required}
+              rows="3"
+              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+            />
+          </div>
+        );
+      default:
+        return (
+          <div key={fieldName}>
+            <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
+            <input
+              type={type}
+              value={value || ''}
+              onChange={onChange}
+              required={required}
+              min={min}
+              max={max}
+              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+            />
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="min-h-screen ml-[80px] p-8 bg-gradient-to-br from-gray-900 to-gray-800">
@@ -181,211 +437,375 @@ export default function ValidationSchemaForm({ initialData, schemaId, onSuccess 
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* General info */}
-          <div className="bg-gray-900/40 border border-yellow-400/10 rounded-lg p-5 space-y-4">
-            <h3 className="text-lg font-semibold text-yellow-300">Informations générales</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Nom du schéma</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200 focus:ring-2 focus:ring-yellow-400"
-                />
+          {/* --- General info fields (dynamic) --- */}
+          {(isFieldAllowed('name') || isFieldAllowed('targetType') || isFieldAllowed('description')) && (
+            <div className="bg-gray-900/40 border border-yellow-400/10 rounded-lg p-5 space-y-4">
+              <h3 className="text-lg font-semibold text-yellow-300">Informations générales</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {isFieldAllowed('name') && renderSimpleField(
+                  'name', 'text', formData.name,
+                  (e) => setFormData(prev => ({ ...prev, name: e.target.value })),
+                  fieldConfigs.name
+                )}
+                {isFieldAllowed('targetType') && renderSimpleField(
+                  'targetType', 'select', formData.targetType,
+                  (e) => setFormData(prev => ({ ...prev, targetType: e.target.value })),
+                  fieldConfigs.targetType
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Type de cible</label>
-                <select
-                  value={formData.targetType}
-                  onChange={e => setFormData({ ...formData, targetType: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-                >
-                  <option value="User">Utilisateur</option>
-                  <option value="File">Fichier</option>
-                  <option value="Cotisation">Cotisation</option>
-                  <option value="Custom">Personnalisé</option>
-                </select>
+              {isFieldAllowed('description') && renderSimpleField(
+                'description', 'textarea', formData.description,
+                (e) => setFormData(prev => ({ ...prev, description: e.target.value })),
+                fieldConfigs.description
+              )}
+            </div>
+          )}
+
+          {/* --- Steps (custom editor) --- */}
+          {isFieldAllowed('steps') && (
+            <div className="bg-gray-900/40 border border-yellow-400/10 rounded-lg p-5">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-yellow-300">Étapes du workflow</h3>
+                <button type="button" onClick={addStep} className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">
+                  + Ajouter une étape
+                </button>
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-              <textarea
-                value={formData.description}
-                onChange={e => setFormData({ ...formData, description: e.target.value })}
-                rows="3"
-                className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-              />
-            </div>
-          </div>
-
-          {/* Steps */}
-          <div className="bg-gray-900/40 border border-yellow-400/10 rounded-lg p-5">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-yellow-300">Étapes du workflow</h3>
-              <button type="button" onClick={addStep} className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700">
-                + Ajouter une étape
-              </button>
-            </div>
-
-            {formData.steps.length === 0 && (
-              <p className="text-gray-400 italic text-center py-4">Aucune étape. Cliquez sur "Ajouter une étape" pour commencer.</p>
-            )}
-
-            {formData.steps.map((step, idx) => {
-              const usersForRole = usersByRole[step.requiredRole] || [];
-              const userOptions = usersForRole.map(u => ({
-                value: u._id,
-                label: `${u.name} ${u.lastname} (${u.email})`
-              }));
-              return (
-                <div key={idx} className="bg-gray-800/60 border border-gray-700 rounded-xl p-5 mb-5 shadow-md">
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-md font-semibold text-yellow-200">Étape {step.order}</h4>
-                    <div className="flex items-center gap-3">
-                      {/* Toggle switch */}
-                      <label className="relative inline-flex items-center cursor-pointer">
+              {formData.steps.length === 0 && (
+                <p className="text-gray-400 italic text-center py-4">Aucune étape. Cliquez sur "Ajouter une étape" pour commencer.</p>
+              )}
+              {formData.steps.map((step, idx) => {
+                const usersForRole = usersByRole[step.requiredRole] || [];
+                const userOptions = usersForRole.map(u => ({
+                  value: u._id,
+                  label: `${u.name} ${u.lastname} (${u.email})`
+                }));
+                return (
+                  <div key={idx} className="bg-gray-800/60 border border-gray-700 rounded-xl p-5 mb-5 shadow-md">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-md font-semibold text-yellow-200">Étape {step.order}</h4>
+                      <div className="flex items-center gap-3">
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={step.required}
+                            onChange={e => updateStep(idx, 'required', e.target.checked)}
+                          />
+                          <div className="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-green-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
+                          <span className="ml-2 text-sm text-gray-300">Requis</span>
+                        </label>
+                        <button type="button" onClick={() => deleteStep(idx)} className="text-red-400 text-sm hover:text-red-300">Supprimer</button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Nom de l'étape</label>
                         <input
-                          type="checkbox"
-                          className="sr-only peer"
-                          checked={step.required}
-                          onChange={e => updateStep(idx, 'required', e.target.checked)}
+                          type="text"
+                          value={step.stepName}
+                          onChange={e => updateStep(idx, 'stepName', e.target.value)}
+                          required
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
                         />
-                        <div className="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-green-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4"></div>
-                        <span className="ml-2 text-sm text-gray-300">Requis</span>
-                      </label>
-                      <button type="button" onClick={() => deleteStep(idx)} className="text-red-400 text-sm hover:text-red-300">
-                        Supprimer
-                      </button>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">Nom de l'étape</label>
-                      <input
-                        type="text"
-                        value={step.stepName}
-                        onChange={e => updateStep(idx, 'stepName', e.target.value)}
-                        required
-                        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">Rôle requis</label>
-                      <select
-                        value={step.requiredRole}
-                        onChange={e => handleRoleChange(idx, e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-                      >
-                        {STEP_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">Utilisateurs autorisés</label>
-                      {loadingUsers && usersForRole.length === 0 ? (
-                        <div className="text-sm text-gray-400">Chargement...</div>
-                      ) : (
-                        <MultiSelect
-                          options={userOptions}
-                          value={step.allowedUserIds || []}
-                          onChange={(selected) => updateStep(idx, 'allowedUserIds', selected)}
-                          placeholder="Sélectionner des utilisateurs..."
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Rôle requis</label>
+                        <select
+                          value={step.requiredRole}
+                          onChange={(e) => handleRoleChange(idx, e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                        >
+                          {STEP_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Utilisateurs autorisés</label>
+                        {loadingUsers && usersForRole.length === 0 ? (
+                          <div className="text-sm text-gray-400">Chargement...</div>
+                        ) : (
+                          <MultiSelect
+                            key={`${step.requiredRole}-${idx}`}
+                            options={userOptions}
+                            value={step.allowedUserIds || []}
+                            onChange={(selected) => updateStep(idx, 'allowedUserIds', selected)}
+                            placeholder="Sélectionner des utilisateurs..."
+                          />
+                        )}
+                        <p className="text-xs text-gray-400 mt-1">Laissez vide pour autoriser tout le rôle.</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Action en cas de rejet</label>
+                        <select
+                          value={step.rejectAction}
+                          onChange={e => updateStep(idx, 'rejectAction', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                        >
+                          {REJECT_ACTIONS.map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Rôle d'escalade (si action='escalate')</label>
+                        <select
+                          value={step.escalateToRole || 'admin'}
+                          onChange={e => updateStep(idx, 'escalateToRole', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                        >
+                          {STEP_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Timeout (secondes, 0 = désactivé)</label>
+                        <input
+                          type="number"
+                          value={step.timeout.duration}
+                          onChange={e => updateStep(idx, 'timeout', { duration: parseInt(e.target.value) || 0 })}
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
                         />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Action du timeout</label>
+                        <select
+                          value={step.timeout.action}
+                          onChange={e => updateStep(idx, 'timeout', { action: e.target.value })}
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                        >
+                          {TIMEOUT_ACTIONS.map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-3 border-t text-gray-300 border-gray-700">
+                      <div className="flex justify-between items-center mb-2">
+                        <h5 className="text-sm font-semibold text-yellow-300">Conditions d'approbation</h5>
+                        <button
+                          type="button"
+                          onClick={() => addCondition(idx)}
+                          className="text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-white"
+                        >
+                          + Ajouter une condition
+                        </button>
+                      </div>
+                      {(step.approveConditions || []).length === 0 && (
+                        <p className="text-gray-400 text-xs italic">Aucune condition.</p>
                       )}
-                      <p className="text-xs text-gray-400 mt-1">Laissez vide pour autoriser tout le rôle.</p>
+                      {(step.approveConditions || []).map((cond, cidx) => (
+                        <div key={cidx} className="bg-gray-900/60 rounded p-3 mb-2">
+                          <div className="flex justify-between items-start mb-2">
+                            <select
+                              value={cond.type}
+                              onChange={e => updateCondition(idx, cidx, 'type', e.target.value)}
+                              className="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm"
+                            >
+                              {CONDITION_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                            </select>
+                            <button onClick={() => removeCondition(idx, cidx)} className="text-red-400 text-xs">Supprimer</button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-1">
+                            {renderConditionParams(cond, idx, cidx)}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">Action en cas de rejet</label>
-                      <select
-                        value={step.rejectAction}
-                        onChange={e => updateStep(idx, 'rejectAction', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-                      >
-                        {REJECT_ACTIONS.map(a => <option key={a} value={a}>{a}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">Rôle d'escalade (si action='escalate')</label>
-                      <select
-                        value={step.escalateToRole || 'admin'}
-                        onChange={e => updateStep(idx, 'escalateToRole', e.target.value)}
-                        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-                      >
-                        {STEP_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">Timeout (heures, 0 = désactivé)</label>
-                      <input
-                        type="number"
-                        value={step.timeout.duration}
-                        onChange={e => updateStep(idx, 'timeout', { duration: parseInt(e.target.value) || 0 })}
+                    <div className="mt-3">
+                      <label className="block text-sm text-gray-300 mb-1">Description de l'étape</label>
+                      <textarea
+                        value={step.description}
+                        onChange={e => updateStep(idx, 'description', e.target.value)}
+                        rows="2"
                         className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">Action du timeout</label>
-                      <select
-                        value={step.timeout.action}
-                        onChange={e => updateStep(idx, 'timeout', { action: e.target.value })}
-                        className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-                      >
-                        {TIMEOUT_ACTIONS.map(a => <option key={a} value={a}>{a}</option>)}
-                      </select>
-                    </div>
                   </div>
-                  <div className="mt-3">
-                    <label className="block text-sm text-gray-300 mb-1">Description de l'étape</label>
-                    <textarea
-                      value={step.description}
-                      onChange={e => updateStep(idx, 'description', e.target.value)}
-                      rows="2"
-                      className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
 
-          {/* Global config */}
-          <div className="bg-gray-900/40 border border-yellow-400/10 rounded-lg p-5">
-            <h3 className="text-lg font-semibold text-yellow-300 mb-4">Configuration globale</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Timeout global (heures)</label>
-                <input
-                  type="number"
-                  value={formData.globalTimeout.duration}
-                  onChange={e => setFormData({ ...formData, globalTimeout: { ...formData.globalTimeout, duration: parseInt(e.target.value) || 0 } })}
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Action globale du timeout</label>
-                <select
-                  value={formData.globalTimeout.action}
-                  onChange={e => setFormData({ ...formData, globalTimeout: { ...formData.globalTimeout, action: e.target.value } })}
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-                >
-                  <option value="reject">Rejeter la demande</option>
-                  <option value="cancel">Annuler la demande</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Action de rejet globale</label>
-                <select
-                  value={formData.globalRejectAction}
-                  onChange={e => setFormData({ ...formData, globalRejectAction: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
-                >
-                  {REJECT_ACTIONS.map(a => <option key={a} value={a}>{a}</option>)}
-                </select>
+          {/* --- Global timeout --- */}
+          {isFieldAllowed('globalTimeout') && (
+            <div className="bg-gray-900/40 border border-yellow-400/10 rounded-lg p-5">
+              <h3 className="text-lg font-semibold text-yellow-300 mb-4">Configuration globale</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Timeout global (heures)</label>
+                  <input
+                    type="number"
+                    value={formData.globalTimeout.duration}
+                    onChange={e => setFormData(prev => ({ ...prev, globalTimeout: { ...prev.globalTimeout, duration: parseInt(e.target.value) || 0 } }))}
+                    className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Action globale du timeout</label>
+                  <select
+                    value={formData.globalTimeout.action}
+                    onChange={e => setFormData(prev => ({ ...prev, globalTimeout: { ...prev.globalTimeout, action: e.target.value } }))}
+                    className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                  >
+                    <option value="reject">Rejeter la demande</option>
+                    <option value="cancel">Annuler la demande</option>
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
+          {/* --- Post‑validation actions --- */}
+          {(isFieldAllowed('onApproval') || isFieldAllowed('onRejection')) && (
+            <div className="bg-gray-900/40 border border-yellow-400/10 rounded-lg p-5">
+              <h3 className="text-lg font-semibold text-yellow-300 mb-4">Actions post‑validation</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* On Approval */}
+                {isFieldAllowed('onApproval') && (
+                  <div>
+                    <h4 className="text-md font-medium text-yellow-300 mb-3">En cas d'approbation</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Action</label>
+                        <select
+                          value={formData.onApproval.action}
+                          onChange={e => updateFinalAction('onApproval', 'action', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                        >
+                          {FINAL_ACTIONS.map(act => <option key={act} value={act}>{act}</option>)}
+                        </select>
+                      </div>
+                      {formData.onApproval.action === 'setField' && (
+                        <>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-1">Nom du champ</label>
+                            <input
+                              type="text"
+                              value={formData.onApproval.params.field || ''}
+                              onChange={e => updateFinalActionParam('onApproval', 'field', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-1">Valeur</label>
+                            <input
+                              type="text"
+                              value={formData.onApproval.params.value ?? ''}
+                              onChange={e => updateFinalActionParam('onApproval', 'value', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                            />
+                          </div>
+                        </>
+                      )}
+                      {formData.onApproval.action === 'callService' && (
+                        <>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-1">Service</label>
+                            <input
+                              type="text"
+                              value={formData.onApproval.params.service || ''}
+                              onChange={e => updateFinalActionParam('onApproval', 'service', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-1">Méthode</label>
+                            <input
+                              type="text"
+                              value={formData.onApproval.params.method || ''}
+                              onChange={e => updateFinalActionParam('onApproval', 'method', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-1">Arguments (JSON)</label>
+                            <textarea
+                              value={approvalArgsText}
+                              onChange={(e) => setApprovalArgsText(e.target.value)}
+                              onBlur={handleApprovalArgsBlur}
+                              rows="2"
+                              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg"
+                              placeholder='["arg1", 123]'
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* On Rejection */}
+                {isFieldAllowed('onRejection') && (
+                  <div>
+                    <h4 className="text-md font-medium text-yellow-300 mb-3">En cas de rejet</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm text-gray-300 mb-1">Action</label>
+                        <select
+                          value={formData.onRejection.action}
+                          onChange={e => updateFinalAction('onRejection', 'action', e.target.value)}
+                          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                        >
+                          {FINAL_ACTIONS.map(act => <option key={act} value={act}>{act}</option>)}
+                        </select>
+                      </div>
+                      {formData.onRejection.action === 'setField' && (
+                        <>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-1">Nom du champ</label>
+                            <input
+                              type="text"
+                              value={formData.onRejection.params.field || ''}
+                              onChange={e => updateFinalActionParam('onRejection', 'field', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-1">Valeur</label>
+                            <input
+                              type="text"
+                              value={formData.onRejection.params.value ?? ''}
+                              onChange={e => updateFinalActionParam('onRejection', 'value', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+                            />
+                          </div>
+                        </>
+                      )}
+                      {formData.onRejection.action === 'callService' && (
+                        <>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-1">Service</label>
+                            <input
+                              type="text"
+                              value={formData.onRejection.params.service || ''}
+                              onChange={e => updateFinalActionParam('onRejection', 'service', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-1">Méthode</label>
+                            <input
+                              type="text"
+                              value={formData.onRejection.params.method || ''}
+                              onChange={e => updateFinalActionParam('onRejection', 'method', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-300 mb-1">Arguments (JSON)</label>
+                            <textarea
+                              value={rejectionArgsText}
+                              onChange={(e) => setRejectionArgsText(e.target.value)}
+                              onBlur={handleRejectionArgsBlur}
+                              rows="2"
+                              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg"
+                              placeholder='["arg1", 123]'
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* --- Submit buttons --- */}
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
             <button type="button" onClick={() => navigate('/dash/validation/schemas')} className="px-5 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-gray-200">
               Annuler
