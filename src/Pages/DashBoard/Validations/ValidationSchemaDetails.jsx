@@ -354,9 +354,9 @@ export default function ValidationSchemaDetails() {
               <span className="text-gray-400">Modifié le :</span>
               <span>{new Date(schema.updatedAt).toLocaleString('fr-FR')}</span>
               <span className="text-gray-400">Créé par :</span>
-              <span>{schema.createdBy?.email || schema.createdBy?.name || "–"}</span>
+              <span>{schema.createdBy?.email || schema.createdBy?.name + ' ' + schema.createdBy?.lastname || "–"}</span>
               <span className="text-gray-400">Dernière modification par :</span>
-              <span>{schema.updatedBy?.email || schema.updatedBy?.name || "–"}</span>
+              <span>{schema.updatedBy?.email || schema.updatedBy?.name + ' ' + schema.updatedBy?.lastname  || "–"}</span>
             </div>
           </div>
         )}
