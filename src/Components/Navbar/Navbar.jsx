@@ -2,8 +2,9 @@ import { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { UserContext } from "../../Context/dataCont";
 import { logoutContext } from "../../Context/logoutContext";
+import NotificationBell from "../NotificationBell/NotificationBell";
 import sabAvatar from '../../assets/SabrinaAvatar.jpg';
-import Title from '../Title'
+import Title from '../Title';
 
 export default function Navbar() {
   const { authData } = useContext(UserContext);
@@ -35,13 +36,12 @@ export default function Navbar() {
           {/* Logo / Brand */}
           <div className="flex-shrink-0">
             <Link to="#">
-              <Title title="Gest Org"></Title>
+              <Title title="Gest Org" />
             </Link>
           </div>
-
+          
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-6">
-            {/* Dashboard visible to admin and super_admin */}
             {(role === "admin" || role === "super_admin") && (
               <Link to="/dash" className="hover:text-yellow-400 transition-colors">
                 Dashboard
@@ -52,50 +52,60 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Profile Dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-gray-800 transition-all"
-            >
-              <span className="font-semibold">{user?.name}</span>
-              <img
-                src={PROFILE_URL}
-                alt="Avatar"
-                className="w-8 h-8 rounded-full border-2 border-yellow-300"
-              />
-            </button>
+          {/* Right side: Bell + Profile Dropdown */}
+          <div className="flex items-center gap-3">
+            {/* Notification Bell */}
+            <NotificationBell />
 
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-gray-900 text-yellow-300 shadow-lg rounded-lg py-2 z-50 border border-yellow-300">
-                {/* Common profile options for all authenticated users */}
-                <button
-                  onClick={() => { navigate(`/auth/update/${id}`); setDropdownOpen(false); }}
-                  className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
-                >
-                  Edit Profile
-                </button>
-                <button
-                  onClick={() => { navigate("/auth/resetPsw"); setDropdownOpen(false); }}
-                  className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
-                >
-                  Edit Password
-                </button>
+            {/* Profile Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-gray-800 transition-all"
+              >
+                <span className="font-semibold">{user?.name}</span>
+                <img
+                  src={PROFILE_URL}
+                  alt="Avatar"
+                  className="w-8 h-8 rounded-full border-2 border-yellow-300"
+                />
+              </button>
 
-                <div className="border-t border-yellow-300 my-1"></div>
-                <button
-                  onClick={() => { handleLogout(); setDropdownOpen(false); }}
-                  className="block w-full text-left px-4 py-2 text-red-500 hover:bg-red-500 hover:text-gray-900 transition-all"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-gray-900 text-yellow-300 shadow-lg rounded-lg py-2 z-50 border border-yellow-300">
+                  <button
+                    onClick={() => { navigate(`/auth/update/${id}`); setDropdownOpen(false); }}
+                    className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
+                  >
+                    Edit Profile
+                  </button>
+                  <button
+                    onClick={() => { navigate("/auth/resetPsw"); setDropdownOpen(false); }}
+                    className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
+                  >
+                    Edit Password
+                  </button>
+                  <button
+                    onClick={() => { navigate("/auth/preferences"); setDropdownOpen(false); }}
+                    className="block w-full text-left px-4 py-2 hover:bg-yellow-300 hover:text-gray-900 transition-all"
+                  >
+                    Preferences
+                  </button>
+                  <div className="border-t border-yellow-300 my-1"></div>
+                  <button
+                    onClick={() => { handleLogout(); setDropdownOpen(false); }}
+                    className="block w-full text-left px-4 py-2 text-red-500 hover:bg-red-500 hover:text-gray-900 transition-all"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Mobile Menu Placeholder */}
           <div className="md:hidden flex items-center">
-            {/* You can add a hamburger menu here if needed */}
+            {/* Hamburger menu can go here */}
           </div>
 
         </div>

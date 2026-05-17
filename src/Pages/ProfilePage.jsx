@@ -465,7 +465,7 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* Personal Details (unchanged) */}
+        {/* Personal Details */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Personal Details" textColor="text-yellow-300" />
@@ -488,20 +488,20 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* Files (unchanged) */}
+        {/* Files */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Files" textColor="text-yellow-300" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-            {files.filter(file => file.folder !== "profile").map((file) => (
+            {files.filter(file => file.folder !== "profile").map((file, idx) => (
               <FileCard key={file._id} file={file} handleDelete={handleDelete} handleReplace={handleReplace} />
             ))}
             {perform && <AddFileCard onUpload={handleUpload} />}
           </div>
         </div>
 
-        {/* Cotisations (unchanged) */}
+        {/* Cotisations */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Cotisations" textColor="text-yellow-300" />
@@ -522,7 +522,7 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* Payments (unchanged) */}
+        {/* Payments */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-yellow-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Historique des paiements" textColor="text-yellow-300" />
@@ -538,7 +538,7 @@ export default function ProfilePage({ user }) {
           </div>
         </div>
 
-        {/* Credit Transactions (unchanged) */}
+        {/* Credit Transactions */}
         <div className="w-3/4 mx-auto mt-12 bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-xl border border-blue-400/20 p-10">
           <div className="flex justify-between items-center mb-6">
             <Title title="Historique des crédits" textColor="text-blue-300" />
@@ -555,7 +555,7 @@ export default function ProfilePage({ user }) {
         </div>
       </div>
 
-      {/* Transaction Modal (deposit/withdraw) – unchanged */}
+      {/* Transaction Modal (deposit/withdraw)*/}
       {showTransactionModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-gray-800 rounded-xl p-6 w-96 border border-yellow-400/30 shadow-2xl">

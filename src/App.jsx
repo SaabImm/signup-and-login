@@ -13,6 +13,8 @@ import ResetPassword from './Pages/DashBoard/Users/resetPassword';
 import OnboardingPage from './Pages/OnboardingPage';
 import VerifyPage from './Pages/VerificationPage';
 import VerifyPendingPage from './Pages/VerifyPending';
+import NotificationsPage from './Pages/NotificationPage'
+import PreferencesPage from './Pages/PreferencesPage'
 
 import AdminDashboard from './Pages/DashBoard/Admin Dashboard';
 import GetUsers from './Pages/DashBoard/Users/getUsers';
@@ -37,6 +39,7 @@ import EditValidationSchema from "./Pages/DashBoard/Validations/EditValidationSc
 import ValidationSchemaVersions from "./Pages/DashBoard/Validations/ValidationSchemasVersions";
 import AllValidationRequests from "./Pages/DashBoard/Validations/allValidationRequests";
 import ValidationSchemaDetails from './Pages/DashBoard/Validations/ValidationSchemaDetails'
+import ValidationRequestProgress from './Pages/DashBoard/Validations/ValidationRequestsProgress';
 export default function App() {
   return (
     <Routes>
@@ -51,7 +54,8 @@ export default function App() {
       <Route path="/auth" element={<AuthLayout />}>
         <Route path="verify-pending" element={<VerifyPendingPage />} />
         <Route path="verify" element={<VerifyPage />} />
-
+        <Route path="notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+        <Route path="preferences" element={<ProtectedRoute><PreferencesPage /></ProtectedRoute>} />
         {/* Pages accessible to any logged-in user */}
         <Route path="profile" element={
           <ProtectedRoute><ProfilePage /></ProtectedRoute>
@@ -93,7 +97,7 @@ export default function App() {
         <Route path="validation/schemas/:schemaId/edit" element={<EditValidationSchema />} />
         <Route path="validation/schemas/:schemaId/versions" element={<ValidationSchemaVersions />} />
         <Route path="validation/schemas/:schemaId" element={<ValidationSchemaDetails />} />
-
+        <Route path="validation/progress/:id" element={<ValidationRequestProgress />} />
 
 
         <Route path="delete/:id" element={<DeleteItem mode='user' />} />

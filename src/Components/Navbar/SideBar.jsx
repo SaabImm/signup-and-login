@@ -1,11 +1,9 @@
 import { useContext, useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { logoutContext } from "../../Context/logoutContext";
 import { UserContext } from "../../Context/dataCont";
 import SectionTitle from '../Title';
 
 export default function SideBar() {
-  const { handleLogout } = useContext(logoutContext);
   const navigate = useNavigate();
   const location = useLocation();
   const { authData } = useContext(UserContext);
@@ -256,15 +254,6 @@ export default function SideBar() {
             Mon profil
           </button>
         </div>
-      </div>
-
-      <div className="flex-shrink-0 mt-6 pt-4 border-t border-gray-700">
-        <button
-          onClick={handleLogout}
-          className="w-full px-4 py-2.5 bg-gray-800 text-gray-200 rounded-lg hover:bg-yellow-400 hover:text-gray-900 font-medium transition-all duration-300"
-        >
-          Déconnexion
-        </button>
       </div>
 
       <style>{`

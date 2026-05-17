@@ -50,13 +50,13 @@ export default function AllValidationRequests() {
     if (!target) return req.targetId?._id || req.targetId;
     switch (req.targetType) {
       case 'User':
-        return `${target.name} ${target.lastname}`;
+        return target.fullName || `${target.name || ''} ${target.lastname || ''}`.trim() || target._id;
       case 'File':
-        return target.fileName || target.name || target._id;
+        return target.fileName || target.name || `Document (${target.folder || 'unknown'})`;
       case 'Cotisation':
         return `Cotisation ${target.year}`;
       default:
-        return target._id || target;
+        return typeof target === 'object' ? target._id : target;
     }
   };
 
@@ -92,7 +92,7 @@ export default function AllValidationRequests() {
           <div
             key={req._id}
             className="bg-gray-800/60 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-5 shadow-lg hover:shadow-xl transition cursor-pointer"
-            onClick={() => navigate(`/dash/validation/requests/${req._id}`)}
+            onClick={() => navigate(`/dash/validation/progress/${req._id}`)}
           >
             <div className="flex justify-between items-start">
               <div className="flex-1">
@@ -100,7 +100,7 @@ export default function AllValidationRequests() {
                   {req.targetType} – {getTargetDisplay(req)}
                 </h3>
                 <p className="text-sm text-gray-400">
-                  Créée par : {req.createdBy?.name || req.createdBy} le {new Date(req.createdAt).toLocaleDateString()}
+                  Créé par : {req.createdBy?.name || req.createdBy} le {new Date(req.createdAt).toLocaleDateString()}
                 </p>
                 <div className="mt-2 flex gap-2">
                   <span className={`px-2 py-1 text-xs rounded-full border ${getStatusBadge(req.status)}`}>

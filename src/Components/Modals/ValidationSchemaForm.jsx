@@ -649,6 +649,86 @@ export default function ValidationSchemaForm({ initialData, schemaId, onSuccess,
             </div>
           )}
 
+          {/* --- Notification configuration --- */}
+{isFieldAllowed('notificationConfig') && (
+  <div className="bg-gray-900/40 border border-yellow-400/10 rounded-lg p-5">
+    <h3 className="text-lg font-semibold text-yellow-300 mb-4">Configuration des notifications</h3>
+    
+    <div className="space-y-4">
+      {/* Email toggle */}
+      <div className="flex items-center justify-between">
+        <div>
+          <span className="text-gray-200 font-medium">Notifications par email</span>
+          <p className="text-xs text-gray-400">Envoyer un email lorsque cette étape devient active</p>
+        </div>
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            checked={formData.notificationConfig?.methods?.email === true}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              notificationConfig: {
+                ...prev.notificationConfig,
+                methods: {
+                  ...prev.notificationConfig?.methods,
+                  email: e.target.checked
+                }
+              }
+            }))}
+          />
+          <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:bg-yellow-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+        </label>
+      </div>
+
+      {/* System (in-app) toggle */}
+      <div className="flex items-center justify-between">
+        <div>
+          <span className="text-gray-200 font-medium">Notifications internes (cloche)</span>
+          <p className="text-xs text-gray-400">Afficher dans le centre de notifications de l'application</p>
+        </div>
+        <label className="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            checked={formData.notificationConfig?.methods?.system === true}
+            onChange={(e) => setFormData(prev => ({
+              ...prev,
+              notificationConfig: {
+                ...prev.notificationConfig,
+                methods: {
+                  ...prev.notificationConfig?.methods,
+                  system: e.target.checked
+                }
+              }
+            }))}
+          />
+          <div className="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:bg-yellow-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-5"></div>
+        </label>
+      </div>
+
+      {/* Email template – optional, only shows if email is checked (or always) */}
+          <div>
+            <label className="block text-sm text-gray-300 mb-1">Modèle d'email (optionnel)</label>
+            <input
+              type="text"
+              value={formData.notificationConfig?.emailTemplate || ''}
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                notificationConfig: {
+                  ...prev.notificationConfig,
+                  emailTemplate: e.target.value
+                }
+              }))}
+              placeholder="Laissez vide pour utiliser le modèle par défaut"
+              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-200"
+            />
+            <p className="text-xs text-gray-400 mt-1">Permet de personnaliser le contenu des emails pour ce schéma.</p>
+          </div>
+        </div>
+      </div>
+    )}
+
           {/* --- Post‑validation actions --- */}
           {(isFieldAllowed('onApproval') || isFieldAllowed('onRejection')) && (
             <div className="bg-gray-900/40 border border-yellow-400/10 rounded-lg p-5">

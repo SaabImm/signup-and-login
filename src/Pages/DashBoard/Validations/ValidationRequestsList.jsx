@@ -19,6 +19,20 @@ export default function ValidationRequestsList() {
     setTimeout(() => setPopup(null), 3000);
   };
 
+  const getTargetDisplay = (targetType, target) => {
+    if (!target) return 'N/A';
+    switch (targetType) {
+      case 'User':
+        return target.fullName || `${target.name || ''} ${target.lastname || ''}`.trim() || target._id;
+      case 'File':
+        return target.fileName || target.name || `Document (${target.folder || 'unknown'})`;
+      case 'Cotisation':
+        return target.type || target.feeType || `Cotisation ${target.year || ''}` || target._id;
+      default:
+        return typeof target === 'object' ? target._id : target;
+    }
+  };
+
   const fetchRequests = async () => {
     try {
       const res = await fetchWithRefresh(
@@ -28,7 +42,9 @@ export default function ValidationRequestsList() {
         setAuthData
       );
       const data = await res.json();
+      console.log(data)
       setRequests(data.requests || []);
+      console.log(requests)
     } catch (err) {
       console.error(err);
     } finally {
@@ -102,9 +118,9 @@ export default function ValidationRequestsList() {
       </div>
       <div className="space-y-4">
         {requests.length === 0 && <p className="text-gray-400">Aucune demande trouvée.</p>}
-        {requests.map((req) => (
+        {requests.map((req, idx) => (
           <div
-            key={req._id}
+            key={idx}
             className="bg-gray-800/60 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-5 shadow-lg hover:shadow-xl transition"
           >
             <div className="flex justify-between items-start">
@@ -113,7 +129,7 @@ export default function ValidationRequestsList() {
                 onClick={() => navigate(`/dash/validation/requests/${req._id}`)}
               >
                 <h3 className="text-lg font-semibold">
-                  {req.targetType} – {req.targetId?.fullName || req.targetId}
+                  {req.targetType} – {getTargetDisplay(req.targetType, req.targetId)}
                 </h3>
                 <p className="text-sm text-gray-400">Créée le {new Date(req.createdAt).toLocaleDateString()}</p>
                 <div className="mt-2 flex gap-2">

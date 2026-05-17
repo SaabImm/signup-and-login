@@ -21,6 +21,20 @@ export default function ValidationRequestDetail() {
     setTimeout(() => setPopup(null), 3000);
   };
 
+  const getTargetDisplay = (targetType, target) => {
+    if (!target) return 'N/A';
+    switch (targetType) {
+      case 'User':
+        return target.fullName || `${target.name || ''} ${target.lastname || ''}`.trim() || target._id;
+      case 'File':
+        return target.fileName || target.name || `Document (${target.folder || 'unknown'})`;
+      case 'Cotisation':
+        return target.type || target.feeType || `Cotisation ${target.year || ''}` || target._id;
+      default:
+        return typeof target === 'object' ? target._id : target;
+    }
+  };
+
   useEffect(() => {
     const fetchRequest = async () => {
       try {
@@ -46,42 +60,50 @@ export default function ValidationRequestDetail() {
     if (authData?.token) fetchRequest();
   }, [id, authData.token]);
 
-  const handleStepAction = async (stepOrder, action) => {
-    const comment = comments[stepOrder] || '';
-    if (!comment && action !== 'skip') {
-      handlePopup('error', 'Veuillez ajouter un commentaire');
-      return;
-    }
-    setActionLoading(true);
-    try {
-      const url = `${API_URL}/validation/requests/${id}/${action}/${stepOrder}`;
-      const body = action === 'skip' ? { reason: comment } : { comments: comment };
-      const res = await fetchWithRefresh(
-        url,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        },
-        authData.token,
-        setAuthData
-      );
-      const data = await res.json();
-      if (res.ok) {
-        setRequest(data.request);
-        setComments(prev => ({ ...prev, [stepOrder]: '' }));
-        handlePopup('success', `Étape ${action}ée avec succès`);
-      } else {
-        handlePopup('error', data.error || 'Erreur');
+    const handleStepAction = async (stepOrder, action) => {
+      const comment = comments[stepOrder] || '';
+      if (!comment && action !== 'skip') {
+        handlePopup('error', 'Veuillez ajouter un commentaire');
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      handlePopup('error', 'Erreur réseau');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
+      setActionLoading(true);
+      try {
+        const url = `${API_URL}/validation/requests/${id}/${action}/${stepOrder}`;
+        let body;
+        if (action === 'skip') {
+          body = { reason: comment };
+        } else {
+          body = { comments: comment };
+        }
+        const res = await fetchWithRefresh(
+          url,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          },
+          authData.token,
+          setAuthData
+        );
+        const data = await res.json();
+        if (res.ok) {
+          const updatedRequest = data.request || data;
+          if (!updatedRequest || !updatedRequest._id) {
+            throw new Error('Invalid response from server');
+          }
+          setRequest(updatedRequest);
+          setComments(prev => ({ ...prev, [stepOrder]: '' }));
+          handlePopup('success', `Étape ${action}ée avec succès`);
+        } else {
+          handlePopup('error', data.error || 'Erreur');
+        }
+      } catch (err) {
+        console.error(err);
+        handlePopup('error', 'Erreur réseau');
+      } finally {
+        setActionLoading(false);
+      }
+    };
   const updateComment = (stepOrder, value) => {
     setComments(prev => ({ ...prev, [stepOrder]: value }));
   };
@@ -105,8 +127,9 @@ export default function ValidationRequestDetail() {
   // Filter steps: only active steps where the user is allowed
   const userSteps = request.steps.filter(step =>
     step.isActive === true &&
-    step.allowedUserIds?.some(id => id.toString() === userId?.toString())
+    step.allowedUserIds?.some(user => user._id.toString() === userId?.toString())
   );
+
 
   return (
     <div className="min-h-screen ml-[80px] p-8 bg-gradient-to-br from-gray-900 to-gray-800 text-yellow-400 font-urbanist">
@@ -122,7 +145,7 @@ export default function ValidationRequestDetail() {
 
       <Title title={`Demande #${request._id.slice(-6)}`} />
       <div className="bg-gray-800/60 backdrop-blur-sm border border-yellow-400/20 rounded-xl p-6 mb-6">
-        <p><span className="text-gray-400">Cible :</span> {request.targetType} – {request.targetId?.fullName || request.targetId}</p>
+        <p><span className="text-gray-400">Cible :</span> {request.targetType} – {getTargetDisplay(request.targetType, request.targetId)}</p>
         <p><span className="text-gray-400">Statut :</span> {request.status}</p>
         {request.expiresAt && <p><span className="text-gray-400">Expire le :</span> {new Date(request.expiresAt).toLocaleString()}</p>}
       </div>
